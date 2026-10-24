@@ -2153,30 +2153,38 @@ Library.Sections.__index = Library.Sections;
                                 local value = ((Slider.Max - Slider.Min) * sizeX) + Slider.Min
                                 Set(value)
                         end
+                        local function IsPress(input)
+                                return input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch
+                        end
                         Library:Connection(NewSlider.InputBegan, function(input)
-                                if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                                if IsPress(input) then
                                         Sliding = true
                                         Slide(input)
                                 end
                         end)
                         Library:Connection(NewSlider.InputEnded, function(input)
-                                if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                                if IsPress(input) then
                                         Sliding = false
                                 end
                         end)
                         Library:Connection(Accent.InputBegan, function(input)
-                                if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                                if IsPress(input) then
                                         Sliding = true
                                         Slide(input)
                                 end
                         end)
                         Library:Connection(Accent.InputEnded, function(input)
-                                if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                                if IsPress(input) then
+                                        Sliding = false
+                                end
+                        end)
+                        Library:Connection(game:GetService("UserInputService").InputEnded, function(input)
+                                if IsPress(input) then
                                         Sliding = false
                                 end
                         end)
                         Library:Connection(game:GetService("UserInputService").InputChanged, function(input)
-                                if input.UserInputType == Enum.UserInputType.MouseMovement then
+                                if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
                                         if Sliding then
                                                 Slide(input)
                                         end
