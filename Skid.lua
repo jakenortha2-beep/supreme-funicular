@@ -611,62 +611,6 @@ Library.Sections.__index = Library.Sections;
                                 end
                         end
                 end
-                Library.FOV = {
-                        Circle = nil,
-                        Visible = false,
-                        Radius = 150,
-                        Thickness = 1,
-                        Transparency = 1,
-                        Filled = false,
-                        Color = Color3.new(1,1,1),
-                        Position = nil,
-                }
-                local FOVConnection = nil
-                local function GetFOVCircle()
-                        local FOV = Library.FOV
-                        if not FOV.Circle then
-                                FOV.Circle = Drawing.new("Circle")
-                                FOV.Circle.NumSides = 64
-                                FOV.Circle.Radius = FOV.Radius
-                                FOV.Circle.Thickness = FOV.Thickness
-                                FOV.Circle.Transparency = FOV.Transparency
-                                FOV.Circle.Filled = FOV.Filled
-                                FOV.Circle.Color = FOV.Color
-                                FOV.Circle.Visible = FOV.Visible
-                        end
-                        return FOV.Circle
-                end
-                function Library:UpdateFOV(Properties)
-                        local FOV = Library.FOV
-                        for Property, Value in next, (Properties or {}) do
-                                FOV[Property] = Value
-                        end
-                        local Circle = GetFOVCircle()
-                        Circle.Radius = FOV.Radius
-                        Circle.Thickness = FOV.Thickness
-                        Circle.Transparency = FOV.Transparency
-                        Circle.Filled = FOV.Filled
-                        Circle.Color = FOV.Color
-                        if FOV.Position then
-                                Circle.Position = FOV.Position
-                        end
-                end
-                function Library:SetFOV(State)
-                        local Circle = GetFOVCircle()
-                        Library.FOV.Visible = State and true or false
-                        Circle.Visible = Library.FOV.Visible
-                        if Library.FOV.Visible and not FOVConnection then
-                                FOVConnection = Library:Connection(RunService.RenderStepped, function()
-                                        local FOV = Library.FOV
-                                        if FOV.Visible and FOV.Circle then
-                                                FOV.Circle.Position = FOV.Position or NewVector2(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
-                                        end
-                                end)
-                        elseif not Library.FOV.Visible and FOVConnection then
-                                FOVConnection:Disconnect()
-                                FOVConnection = nil
-                        end
-                end
                 function Library:IsMouseOverFrame(Frame)
                         local AbsPos, AbsSize = Frame.AbsolutePosition, Frame.AbsoluteSize;
 
