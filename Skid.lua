@@ -354,7 +354,7 @@ Library.Sections.__index = Library.Sections;
                         local Position = position == "Middle" and NewVector2(viewportSize.X/2 - (TextLabel.TextBounds.X + 4)/2, 600) or NewVector2(20, 20)
                         NotifContainer.Name = "NotifContainer"
                         NotifContainer.Position = UDim2.new(0,Position.X, 0, Position.Y)
-                        NotifContainer.Size = UDim2.new(0,TextLabel.TextBounds.X + 4,0,20)
+                        NotifContainer.Size = UDim2.new(0,TextLabel.TextBounds.X + 2,0,18)
                         NotifContainer.BackgroundColor3 = Color3.new(1,1,1)
                         NotifContainer.BackgroundTransparency = 1
                         NotifContainer.BorderSizePixel = 0
@@ -385,16 +385,16 @@ Library.Sections.__index = Library.Sections;
                         TextLabel.TextColor3 = Color3.new(0.9216,0.9216,0.9216)
                         TextLabel.FontFace = Font.new("rbxassetid://12187371840")
                         TextLabel.TextSize = Library.FontSize
-                        TextLabel.AutomaticSize = Enum.AutomaticSize.X
                         TextLabel.TextXAlignment = Enum.TextXAlignment.Left
                         table.insert(notification.Objects, TextLabel)
                         local function SizeNotification()
-                                NotifContainer.Size = UDim2.new(0, TextLabel.AbsoluteSize.X + 6, 0, 18)
+                                NotifContainer.Size = UDim2.new(0, TextLabel.TextBounds.X + 2, 0, 18)
                                 if position == "Middle" then
                                         NotifContainer.Position = UDim2.new(0, viewportSize.X / 2 - NotifContainer.AbsoluteSize.X / 2, 0, NotifContainer.Position.Y.Offset)
                                 end
                         end
-                        Library:Connection(TextLabel:GetPropertyChangedSignal("AbsoluteSize"), SizeNotification)
+                        Library:Connection(TextLabel:GetPropertyChangedSignal("TextBounds"), SizeNotification)
+                        task.defer(SizeNotification)
                         Accemt.Name = "Accemt"
                         Accemt.Size = UDim2.new(1,0,0,1)
                         Accemt.BackgroundColor3 = Library.Accent
@@ -440,7 +440,7 @@ Library.Sections.__index = Library.Sections;
 
                         table.insert(Library.Notifs, notification)
                         NotifContainer.Position = UDim2.new(0,Position.X,0,Position.Y + (table.find(Library.Notifs, notification) * 25))
-                        NotifContainer.Size = UDim2.new(0,TextLabel.TextBounds.X + 6,0,18)
+                        NotifContainer.Size = UDim2.new(0,TextLabel.TextBounds.X + 2,0,18)
                         SizeNotification()
                         Library:updateNotifsPositions(position)
 
