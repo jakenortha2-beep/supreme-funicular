@@ -540,9 +540,6 @@ Library.Sections.__index = Library.Sections;
                         if typeof(bool) == 'boolean' then
                                 Library.Open = bool;
                                 Library.Holder.Visible = bool;
-                                if Library.MobileToggle then
-                                        Library.MobileToggle.Text = bool and "CLOSE" or "OPEN";
-                                end;
                         end
                 end;
                 function Library:MobileButton(Options)
@@ -554,7 +551,6 @@ Library.Sections.__index = Library.Sections;
                         end;
                         local Gui = Instance.new("ScreenGui", game.CoreGui);
                         local Button = Instance.new("TextButton", Gui);
-                        local Accent = Instance.new("Frame", Button);
                         Gui.Name = "MobileToggle";
                         Gui.DisplayOrder = 3;
                         Gui.IgnoreGuiInset = true;
@@ -563,18 +559,13 @@ Library.Sections.__index = Library.Sections;
                         Button.Size = Options.Size or UDim2.new(0, 72, 0, 40);
                         Button.Position = Options.Position or UDim2.new(0.5, -36, 0, 8);
                         Button.BackgroundColor3 = Color3.new(0.0784, 0.0784, 0.0784);
-                        Button.BorderColor3 = Color3.new(0.0392, 0.0392, 0.0392);
-                        Button.BorderSizePixel = 1;
+                        Button.BackgroundTransparency = 1;
+                        Button.BorderSizePixel = 0;
                         Button.AutoButtonColor = false;
                         Button.FontFace = Library.Font;
                         Button.TextSize = 14;
                         Button.TextColor3 = Color3.new(1, 1, 1);
-                        Button.Text = Library.Open and "CLOSE" or "OPEN";
-                        Accent.Name = "Accent";
-                        Accent.Size = UDim2.new(1, 0, 0, 2);
-                        Accent.BackgroundColor3 = Library.Accent;
-                        Accent.BorderSizePixel = 0;
-                        Library:AddThemeObject(Accent);
+                        Button.Text = "";
                         Library.MobileGui = Gui;
                         Library.MobileToggle = Button;
                         Library:Connection(Button.Activated, function()
