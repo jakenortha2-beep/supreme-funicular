@@ -338,7 +338,7 @@ Library.Sections.__index = Library.Sections;
                 end
                 function Library:updateNotifsPositions(position)
                         for i, v in pairs(Library.Notifs) do
-                                local Position = position == "Middle" and NewVector2(viewportSize.X/2 - (v["Objects"][3].TextBounds.X + 4)/2,600) or NewVector2(20, 20)
+                                local Position = position == "Middle" and NewVector2(viewportSize.X/2 - v.Container.AbsoluteSize.X/2,600) or NewVector2(20, 20)
                                 game:GetService("TweenService"):Create(v.Container, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Position = UDim2.new(0,Position.X,0,Position.Y + (i * 25))}):Play()
                         end
                 end
@@ -388,6 +388,13 @@ Library.Sections.__index = Library.Sections;
                         TextLabel.AutomaticSize = Enum.AutomaticSize.X
                         TextLabel.TextXAlignment = Enum.TextXAlignment.Left
                         table.insert(notification.Objects, TextLabel)
+                        local function SizeNotification()
+                                NotifContainer.Size = UDim2.new(0, TextLabel.AbsoluteSize.X + 6, 0, 18)
+                                if position == "Middle" then
+                                        NotifContainer.Position = UDim2.new(0, viewportSize.X / 2 - NotifContainer.AbsoluteSize.X / 2, 0, NotifContainer.Position.Y.Offset)
+                                end
+                        end
+                        Library:Connection(TextLabel:GetPropertyChangedSignal("AbsoluteSize"), SizeNotification)
                         Accemt.Name = "Accemt"
                         Accemt.Size = UDim2.new(1,0,0,1)
                         Accemt.BackgroundColor3 = Library.Accent
@@ -433,7 +440,8 @@ Library.Sections.__index = Library.Sections;
 
                         table.insert(Library.Notifs, notification)
                         NotifContainer.Position = UDim2.new(0,Position.X,0,Position.Y + (table.find(Library.Notifs, notification) * 25))
-                        NotifContainer.Size = UDim2.new(0,TextLabel.TextBounds.X + 4,0,18)
+                        NotifContainer.Size = UDim2.new(0,TextLabel.TextBounds.X + 6,0,18)
+                        SizeNotification()
                         Library:updateNotifsPositions(position)
 
                         return notification
