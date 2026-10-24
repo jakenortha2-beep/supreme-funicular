@@ -586,12 +586,16 @@ Library.Sections.__index = Library.Sections;
                         Library.Accent = Color
 
                         for obj, theme in next, Library.ThemeObjects do
-                                if theme:IsA("Frame") or theme:IsA("TextButton") then
+                                if theme:IsA("TextLabel") then
+                                        theme.TextColor3 = Color
+                                elseif theme:IsA("TextButton") then
+                                        if theme.BackgroundTransparency < 1 then
+                                                theme.BackgroundColor3 = Color
+                                        else
+                                                theme.TextColor3 = Color
+                                        end
+                                else
                                         theme.BackgroundColor3 = Color
-                                elseif theme:IsA("TextLabel") then
-                                        theme.TextColor3 = Color
-                                elseif theme:IsA("TextButton") and theme.BackgroundTransparency == 1 then
-                                        theme.TextColor3 = Color
                                 end
                         end
                 end
@@ -632,6 +636,7 @@ Library.Sections.__index = Library.Sections;
                         KeyAccent.BackgroundColor3 = Library.Accent
                         KeyAccent.BorderSizePixel = 0
                         KeyAccent.BorderColor3 = Color3.new(0,0,0)
+                        table.insert(Library.ThemeObjects, KeyAccent)
                         KeyHolder.Name = "KeyHolder"
                         KeyHolder.Position = UDim2.new(0,0,0,22)
                         KeyHolder.BackgroundColor3 = Color3.new(1,1,1)
@@ -894,7 +899,7 @@ Library.Sections.__index = Library.Sections;
 
                         local function update()
                                 local real_pos = game:GetService("UserInputService"):GetMouseLocation()
-                                local mouse_position = NewVector2(real_pos.X, real_pos.Y - 40)
+                                local mouse_position = NewVector2(real_pos.X, real_pos.Y - game:GetService("GuiService"):GetGuiInset().Y)
                                 local relative_palette = (mouse_position - Color.AbsolutePosition)
                                 local relative_hue     = (mouse_position - Hue.AbsolutePosition)
                                 local relative_opacity = (mouse_position - Alpha.AbsolutePosition)
@@ -965,49 +970,49 @@ Library.Sections.__index = Library.Sections;
                         set(default, defaultalpha)
 
                         Sat.InputBegan:Connect(function(input)
-                                if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                                if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
                                         slidingsaturation = true
                                         update()
                                 end
                         end)
 
                         Sat.InputEnded:Connect(function(input)
-                                if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                                if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
                                         slidingsaturation = false
                                         update()
                                 end
                         end)
 
                         Hue.InputBegan:Connect(function(input)
-                                if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                                if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
                                         slidinghue = true
                                         update()
                                 end
                         end)
 
                         Hue.InputEnded:Connect(function(input)
-                                if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                                if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
                                         slidinghue = false
                                         update()
                                 end
                         end)
 
                         Alpha.InputBegan:Connect(function(input)
-                                if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                                if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
                                         slidingalpha = true
                                         update()
                                 end
                         end)
 
                         Alpha.InputEnded:Connect(function(input)
-                                if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                                if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
                                         slidingalpha = false
                                         update()
                                 end
                         end)
 
                         Library:Connection(game:GetService("UserInputService").InputChanged, function(input)
-                                if input.UserInputType == Enum.UserInputType.MouseMovement then
+                                if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
                                         if slidingalpha then
                                                 update()
                                         end
@@ -1019,6 +1024,13 @@ Library.Sections.__index = Library.Sections;
                                         if slidingsaturation then
                                                 update()
                                         end
+                                end
+                        end)
+                        Library:Connection(game:GetService("UserInputService").InputEnded, function(input)
+                                if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                                        slidingsaturation = false
+                                        slidinghue = false
+                                        slidingalpha = false
                                 end
                         end)
 
@@ -1050,7 +1062,7 @@ Library.Sections.__index = Library.Sections;
                                 set(Library.CopiedColor or Color3.new(1,1,1), Library.CopiedAlpha or 0)
                         end)
                         Library:Connection(game:GetService("UserInputService").InputBegan, function(Input)
-                                if ModeOutline.Visible and Input.UserInputType == Enum.UserInputType.MouseButton1 then
+                                if ModeOutline.Visible and (Input.UserInputType == Enum.UserInputType.MouseButton1 or Input.UserInputType == Enum.UserInputType.Touch) then
                                         if not Library:IsMouseOverFrame(Icon) then
                                                 ModeOutline.Visible = false
                                         end
@@ -1064,7 +1076,7 @@ Library.Sections.__index = Library.Sections;
                         end
 
                         Library:Connection(game:GetService("UserInputService").InputBegan, function(Input)
-                                if ColorWindow.Visible and Input.UserInputType == Enum.UserInputType.MouseButton1 then
+                                if ColorWindow.Visible and (Input.UserInputType == Enum.UserInputType.MouseButton1 or Input.UserInputType == Enum.UserInputType.Touch) then
                                         if not Library:IsMouseOverFrame(ColorWindow) and not Library:IsMouseOverFrame(Icon) then
                                                 ColorWindow.Visible = false
                                                 parent.ZIndex = 1
@@ -1083,7 +1095,6 @@ Library.Sections.__index = Library.Sections;
                                 Pages = {};
                                 Sections = {};
                                 Elements = {};
-                                Dragging = { false, UDim2.new(0, 0, 0, 0) };
                                 Size = Options.Size or Options.size or UDim2.new(0, 550,0, 600);
                         };
                         local ScreenGui = Instance.new('ScreenGui', game.CoreGui)
@@ -1154,31 +1165,6 @@ Library.Sections.__index = Library.Sections;
                                 Holder = HolderInline
                         }
 
-                        Library:Connection(DragButton.MouseButton1Down, function()
-                                local Location = game:GetService("UserInputService"):GetMouseLocation()
-                                Window.Dragging[1] = true
-                                Window.Dragging[2] = UDim2.new(0, Location.X - Outline.AbsolutePosition.X, 0, Location.Y - Outline.AbsolutePosition.Y)
-                        end)
-                        Library:Connection(game:GetService("UserInputService").InputEnded, function(Input)
-                                if Input.UserInputType == Enum.UserInputType.MouseButton1 and Window.Dragging[1] then
-                                        local Location = game:GetService("UserInputService"):GetMouseLocation()
-                                        Window.Dragging[1] = false
-                                        Window.Dragging[2] = UDim2.new(0, 0, 0, 0)
-                                end
-                        end)
-                        Library:Connection(game:GetService("UserInputService").InputChanged, function(Input)
-                                local Location = game:GetService("UserInputService"):GetMouseLocation()
-                                local ActualLocation = nil
-
-                                if Window.Dragging[1] then
-                                        Outline.Position = UDim2.new(
-                                                0,
-                                                Location.X - Window.Dragging[2].X.Offset + (Outline.Size.X.Offset * Outline.AnchorPoint.X),
-                                                0,
-                                                Location.Y - Window.Dragging[2].Y.Offset + (Outline.Size.Y.Offset * Outline.AnchorPoint.Y)
-                                        )
-                                end
-                        end)
                         Library:Connection(game:GetService("UserInputService").InputBegan, function(Input)
                                 if Input.KeyCode == Library.UIKey then
                                         Library:SetOpen(not Library.Open)
@@ -1903,7 +1889,7 @@ Library.Sections.__index = Library.Sections;
                                         Always.TextColor3 = Color3.new(1,1,1)
                                 end)
                                 Library:Connection(game:GetService("UserInputService").InputBegan, function(Input)
-                                        if ModeOutline.Visible and Input.UserInputType == Enum.UserInputType.MouseButton1 then
+                                        if ModeOutline.Visible and (Input.UserInputType == Enum.UserInputType.MouseButton1 or Input.UserInputType == Enum.UserInputType.Touch) then
                                                 if not Library:IsMouseOverFrame(ModeOutline) then
                                                         ModeOutline.Visible = false
                                                 end
@@ -2856,7 +2842,7 @@ Library.Sections.__index = Library.Sections;
                                 Always.TextColor3 = Color3.new(1,1,1)
                         end)
                         Library:Connection(game:GetService("UserInputService").InputBegan, function(Input, Chatting)
-                                if ModeOutline.Visible and Input.UserInputType == Enum.UserInputType.MouseButton1 then
+                                if ModeOutline.Visible and (Input.UserInputType == Enum.UserInputType.MouseButton1 or Input.UserInputType == Enum.UserInputType.Touch) then
                                         if not Library:IsMouseOverFrame(ModeOutline) then
                                                 ModeOutline.Visible = false
                                         end
