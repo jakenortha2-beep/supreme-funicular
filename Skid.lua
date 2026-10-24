@@ -455,6 +455,7 @@ Library.Sections.__index = Library.Sections;
                                         Index ~= "ConfigConfig_List"
                                         and Index ~= "ConfigConfig_Load"
                                         and Index ~= "ConfigConfig_Save"
+                                        and Index ~= "ConfigConfig_Name"
                                 then
                                         local Value2 = Value
                                         local Final = ""
@@ -497,7 +498,7 @@ Library.Sections.__index = Library.Sections;
                                 local Table2 = {}
                                 for Index, Value in pairs(Table) do
                                         local Table3 = string.split(Value, ":")
-                                        if Table3[1] ~= "ConfigConfig_List" and #Table3 >= 2 then
+                                        if Table3[1] ~= "ConfigConfig_List" and Table3[1] ~= "ConfigConfig_Name" and #Table3 >= 2 then
                                                 local Value = Table3[2]:sub(2, #Table3[2])
                                                 if Value:sub(1, 3) == "rgb" then
                                                         local Table4 = string.split(Value:sub(5, #Value - 1), ",")
@@ -2506,6 +2507,15 @@ Library.Sections.__index = Library.Sections;
                                 end
                         end
                         function Dropdown:Refresh(tbl)
+                                local Old
+                                if Dropdown.Max then
+                                        Old = {}
+                                        for _, opt in next, chosen do
+                                                table.insert(Old, opt)
+                                        end
+                                else
+                                        Old = chosen
+                                end
                                 for _, opt in next, Dropdown.OptionInsts do
                                         coroutine.wrap(function()
                                                 opt.button:Destroy()
@@ -2513,12 +2523,35 @@ Library.Sections.__index = Library.Sections;
                                 end
                                 table.clear(Dropdown.OptionInsts)
 
-                                createoptions(tbl)
+                                Dropdown.Options = tbl or Dropdown.Options
+
+                                createoptions(Dropdown.Options)
 
                                 if Dropdown.Max then
                                         table.clear(chosen)
+                                        for _, opt in next, Old do
+                                                if table.find(Dropdown.Options, opt) then
+                                                        table.insert(chosen, opt)
+                                                        if Dropdown.OptionInsts[opt] then
+                                                                Dropdown.OptionInsts[opt].text.TextColor3 = Color3.fromRGB(255,255,255)
+                                                        end
+                                                end
+                                        end
+                                        local textchosen = {}
+                                        for _, opt in next, chosen do
+                                                table.insert(textchosen, opt)
+                                        end
+                                        Value.Text = #chosen == 0 and "" or table.concat(textchosen, ",")
                                 else
                                         chosen = nil
+                                        Value.Text = ""
+                                        if Old ~= nil and table.find(Dropdown.Options, Old) then
+                                                chosen = Old
+                                                Value.Text = Old
+                                                if Dropdown.OptionInsts[Old] then
+                                                        Dropdown.OptionInsts[Old].text.TextColor3 = Color3.fromRGB(255,255,255)
+                                                end
+                                        end
                                 end
 
                                 Library.Flags[Dropdown.Flag] = chosen
@@ -3059,6 +3092,12 @@ Library.Sections.__index = Library.Sections;
                         end
 
                         Flags[Textbox.Flag] = set
+                        function Textbox:Set(str)
+                                if str == nil then
+                                        str = ""
+                                end
+                                set(str)
+                        end
                         return Textbox
                 end
                 function Sections:Button(Properties)
