@@ -574,7 +574,7 @@ Library.Sections.__index = Library.Sections;
                         Accent.Size = UDim2.new(1, 0, 0, 2);
                         Accent.BackgroundColor3 = Library.Accent;
                         Accent.BorderSizePixel = 0;
-                        table.insert(Library.ThemeObjects, Accent);
+                        Library:AddThemeObject(Accent);
                         Library.MobileGui = Gui;
                         Library.MobileToggle = Button;
                         Library:Connection(Button.Activated, function()
@@ -582,6 +582,18 @@ Library.Sections.__index = Library.Sections;
                         end);
                         return Button;
                 end;
+                function Library:AddThemeObject(Obj)
+                        local Idx = table.find(Library.ThemeObjects, Obj)
+                        if not Idx then
+                                table.insert(Library.ThemeObjects, Obj)
+                        end
+                end
+                function Library:RemoveThemeObject(Obj)
+                        local Idx = table.find(Library.ThemeObjects, Obj)
+                        if Idx then
+                                table.remove(Library.ThemeObjects, Idx)
+                        end
+                end
                 function Library:ChangeAccent(Color)
                         Library.Accent = Color
 
@@ -636,7 +648,7 @@ Library.Sections.__index = Library.Sections;
                         KeyAccent.BackgroundColor3 = Library.Accent
                         KeyAccent.BorderSizePixel = 0
                         KeyAccent.BorderColor3 = Color3.new(0,0,0)
-                        table.insert(Library.ThemeObjects, KeyAccent)
+                        Library:AddThemeObject(KeyAccent)
                         KeyHolder.Name = "KeyHolder"
                         KeyHolder.Position = UDim2.new(0,0,0,22)
                         KeyHolder.BackgroundColor3 = Color3.new(1,1,1)
@@ -1126,7 +1138,7 @@ Library.Sections.__index = Library.Sections;
                         Accent.BackgroundColor3 = Library.Accent
                         Accent.BorderSizePixel = 0
                         Accent.BorderColor3 = Color3.new(0,0,0)
-                        table.insert(Library.ThemeObjects, Accent)
+                        Library:AddThemeObject(Accent)
                         HolderOutline.Name = "HolderOutline"
                         HolderOutline.Position = UDim2.new(0,7,0,11)
                         HolderOutline.Size = UDim2.new(1,-14,1,-18)
@@ -1254,7 +1266,7 @@ Library.Sections.__index = Library.Sections;
                         TabAccent.BorderSizePixel = 0
                         TabAccent.BorderColor3 = Color3.new(0,0,0)
                         TabAccent.Visible = false
-                        table.insert(Library.ThemeObjects, TabAccent)
+                        Library:AddThemeObject(TabAccent)
                         TabLine.Name = "TabLine"
                         TabLine.Position = UDim2.new(0,0,1,-1)
                         TabLine.Size = UDim2.new(1,0,0,1)
@@ -1470,8 +1482,7 @@ Library.Sections.__index = Library.Sections;
                         SectionAccent.BackgroundColor3 = Library.Accent
                         SectionAccent.BorderSizePixel = 0
                         SectionAccent.BorderColor3 = Color3.new(0,0,0)
-                        table.insert(Library.ThemeObjects, SectionAccent)
-                        table.insert(Library.ThemeObjects, SectionAccent)
+                        Library:AddThemeObject(SectionAccent)
                         Title.Name = "Title"
                         Title.Position = UDim2.new(0,10,0,-8)
                         Title.Size = UDim2.new(0,100,0,16)
@@ -1583,7 +1594,7 @@ Library.Sections.__index = Library.Sections;
                         local function SetState()
                                 Toggle.Toggled = not Toggle.Toggled
                                 if Toggle.Toggled then
-                                        table.insert(Library.ThemeObjects, Inline)
+                                        Library:AddThemeObject(Inline)
                                         Inline.BackgroundColor3 = Library.Accent
                                         if Toggle.Risk then
                                                 Title.TextColor3 = Color3.fromRGB(227, 227, 34)
@@ -1591,7 +1602,7 @@ Library.Sections.__index = Library.Sections;
                                                 Title.TextColor3 = Color3.fromRGB(255,255,255)
                                         end
                                 else
-                                        table.remove(Library.ThemeObjects, table.find(Library.ThemeObjects, Inline))
+                                        Library:RemoveThemeObject(Inline)
                                         Inline.BackgroundColor3 = Color3.new(0.1294,0.1294,0.1294)
                                         if Toggle.Risk then
                                                 Title.TextColor3 = Color3.fromRGB(158, 158, 24)
@@ -1605,20 +1616,20 @@ Library.Sections.__index = Library.Sections;
                         Library:Connection(NewToggle.MouseButton1Down, SetState)
                         Library:Connection(NewToggle.MouseEnter, function()
                                 if not Toggle.Toggled then
-                                        table.insert(Library.ThemeObjects, Title)
+                                        Library:AddThemeObject(Title)
                                         Title.TextColor3 = Library.Accent
                                 end
                         end)
                         Library:Connection(NewToggle.MouseLeave, function()
                                 if not Toggle.Toggled then
-                                        table.remove(Library.ThemeObjects, table.find(Library.ThemeObjects, Title))
+                                        Library:RemoveThemeObject(Title)
                                         if Toggle.Risk then
                                                 Title.TextColor3 = Color3.fromRGB(158, 158, 24)
                                         else
                                                 Title.TextColor3 = Color3.fromRGB(145,145,145)
                                         end
                                 else
-                                        table.remove(Library.ThemeObjects, table.find(Library.ThemeObjects, Title))
+                                        Library:RemoveThemeObject(Title)
                                 end
                         end)
 
@@ -2061,8 +2072,7 @@ Library.Sections.__index = Library.Sections;
                         Accent.AutoButtonColor = false
                         Accent.FontFace = Font.new("rbxassetid://12187371840")
                         Accent.TextSize = 14
-                        table.insert(Library.ThemeObjects, Accent)
-                        table.insert(Library.ThemeObjects, Accent)
+                        Library:AddThemeObject(Accent)
                         Add.Name = "Add"
                         Add.Position = UDim2.new(1,5,0.5,0)
                         Add.Size = UDim2.new(0,10,0,10)
@@ -2177,11 +2187,11 @@ Library.Sections.__index = Library.Sections;
                                 end
                         end)
                         Library:Connection(NewSlider.MouseEnter, function()
-                                table.insert(Library.ThemeObjects, Title)
+                                Library:AddThemeObject(Title)
                                 Title.TextColor3 = Library.Accent
                         end)
                         Library:Connection(NewSlider.MouseLeave, function()
-                                table.remove(Library.ThemeObjects, table.find(Library.ThemeObjects, Title))
+                                Library:RemoveThemeObject(Title)
                                 Title.TextColor3 = Color3.new(0.5686,0.5686,0.5686)
                         end)
                         Library:Connection(Add.MouseButton1Down, function()
@@ -2347,12 +2357,12 @@ Library.Sections.__index = Library.Sections;
                         end)
                         Library:Connection(NewDrop.MouseEnter, function()
                                 Outline.BorderColor3 = Library.Accent
-                                table.insert(Library.ThemeObjects, Title)
+                                Library:AddThemeObject(Title)
                                 Title.TextColor3 = Library.Accent
                         end)
                         Library:Connection(NewDrop.MouseLeave, function()
                                 Outline.BorderColor3 = Color3.new(0.0392,0.0392,0.0392)
-                                table.remove(Library.ThemeObjects, table.find(Library.ThemeObjects, Title))
+                                Library:RemoveThemeObject(Title)
                                 Title.TextColor3 = Color3.new(0.5686,0.5686,0.5686)
                         end)
                         local chosen = Dropdown.Max and {} or nil
@@ -2816,11 +2826,11 @@ Library.Sections.__index = Library.Sections;
                                 ModeOutline.Visible = not ModeOutline.Visible
                         end)
                         Library:Connection(NewKey.MouseEnter, function()
-                                table.insert(Library.ThemeObjects, Title)
+                                Library:AddThemeObject(Title)
                                 Title.TextColor3 = Library.Accent
                         end)
                         Library:Connection(NewKey.MouseLeave, function()
-                                table.remove(Library.ThemeObjects, table.find(Library.ThemeObjects, Title))
+                                Library:RemoveThemeObject(Title)
                                 Title.TextColor3 = Color3.new(0.5686,0.5686,0.5686)
                         end)
                         Library:Connection(Hold.MouseButton1Down, function()
@@ -2920,11 +2930,11 @@ Library.Sections.__index = Library.Sections;
                         TextLabel.TextStrokeTransparency = 0
 
                         Library:Connection(NewToggle.MouseEnter, function()
-                                table.insert(Library.ThemeObjects, TextLabel)
+                                Library:AddThemeObject(TextLabel)
                                 TextLabel.TextColor3 = Library.Accent
                         end)
                         Library:Connection(NewToggle.MouseLeave, function()
-                                table.remove(Library.ThemeObjects, table.find(Library.ThemeObjects, TextLabel))
+                                Library:RemoveThemeObject(TextLabel)
                                 TextLabel.TextColor3 = Color3.new(0.5686,0.5686,0.5686)
                         end)
 
@@ -3039,12 +3049,12 @@ Library.Sections.__index = Library.Sections;
 
                         Library:Connection(NewDrop.MouseEnter, function()
                                 Outline.BorderColor3 = Library.Accent
-                                table.insert(Library.ThemeObjects, Title)
+                                Library:AddThemeObject(Title)
                                 Title.TextColor3 = Library.Accent
                         end)
                         Library:Connection(NewDrop.MouseLeave, function()
                                 Outline.BorderColor3 = Color3.new(0.0392,0.0392,0.0392)
-                                table.remove(Library.ThemeObjects, table.find(Library.ThemeObjects, Title))
+                                Library:RemoveThemeObject(Title)
                                 Title.TextColor3 = Color3.new(0.5686,0.5686,0.5686)
                         end)
                         Value.FocusLost:Connect(function()
