@@ -203,6 +203,16 @@ local StarterGui = game:GetService("StarterGui");
 local TweenService = game:GetService("TweenService");
 local VirtualUser = game:GetService("VirtualUser");
 local PathFindingService = game:GetService("PathfindingService");
+local GuiService = game:GetService("GuiService");
+
+Library.TouchMode = InputService.TouchEnabled and not InputService.MouseEnabled
+Library.FontSize = Library.TouchMode and 13 or 9
+function Library:Dim(A, B)
+        if Library.TouchMode then
+                return B or A
+        end
+        return A
+end
 
 local utility = {
         Circle = nil,
@@ -337,13 +347,16 @@ Library.Sections.__index = Library.Sections;
                         return Con
                 end
                 function Library:updateNotifsPositions(position)
+                        local Slot = Library:Dim(25, 34)
                         for i, v in pairs(Library.Notifs) do
                                 local Position = position == "Middle" and NewVector2(viewportSize.X/2 - v.Container.AbsoluteSize.X/2,600) or NewVector2(20, 20)
-                                game:GetService("TweenService"):Create(v.Container, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Position = UDim2.new(0,Position.X,0,Position.Y + (i * 25))}):Play()
+                                game:GetService("TweenService"):Create(v.Container, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Position = UDim2.new(0,Position.X,0,Position.Y + (i * Slot))}):Play()
                         end
                 end
                 function Library:Notification(message, duration, color, position)
                         local notification = {Container = nil, Objects = {}}
+                        local NH = Library:Dim(18, 26)
+                        local NS = Library:Dim(25, 34)
                         local NotifContainer = Instance.new('Frame', NotifiactionSGui)
                         local Background = Instance.new('Frame', NotifContainer)
                         local Outline = Instance.new('Frame', Background)
@@ -354,7 +367,7 @@ Library.Sections.__index = Library.Sections;
                         local Position = position == "Middle" and NewVector2(viewportSize.X/2 - (TextLabel.TextBounds.X + 4)/2, 600) or NewVector2(20, 20)
                         NotifContainer.Name = "NotifContainer"
                         NotifContainer.Position = UDim2.new(0,Position.X, 0, Position.Y)
-                        NotifContainer.Size = UDim2.new(0,TextLabel.TextBounds.X + 2,0,18)
+                        NotifContainer.Size = UDim2.new(0,TextLabel.TextBounds.X + 2,0,NH)
                         NotifContainer.BackgroundColor3 = Color3.new(1,1,1)
                         NotifContainer.BackgroundTransparency = 1
                         NotifContainer.BorderSizePixel = 0
@@ -388,7 +401,7 @@ Library.Sections.__index = Library.Sections;
                         TextLabel.TextXAlignment = Enum.TextXAlignment.Left
                         table.insert(notification.Objects, TextLabel)
                         local function SizeNotification()
-                                NotifContainer.Size = UDim2.new(0, TextLabel.TextBounds.X + 2, 0, 18)
+                                NotifContainer.Size = UDim2.new(0, TextLabel.TextBounds.X + 2, 0, NH)
                                 if position == "Middle" then
                                         NotifContainer.Position = UDim2.new(0, viewportSize.X / 2 - NotifContainer.AbsoluteSize.X / 2, 0, NotifContainer.Position.Y.Offset)
                                 end
@@ -439,8 +452,8 @@ Library.Sections.__index = Library.Sections;
                         end)
 
                         table.insert(Library.Notifs, notification)
-                        NotifContainer.Position = UDim2.new(0,Position.X,0,Position.Y + (table.find(Library.Notifs, notification) * 25))
-                        NotifContainer.Size = UDim2.new(0,TextLabel.TextBounds.X + 2,0,18)
+                        NotifContainer.Position = UDim2.new(0,Position.X,0,Position.Y + (table.find(Library.Notifs, notification) * NS))
+                        NotifContainer.Size = UDim2.new(0,TextLabel.TextBounds.X + 2,0,NH)
                         SizeNotification()
                         Library:updateNotifsPositions(position)
 
@@ -565,8 +578,9 @@ Library.Sections.__index = Library.Sections;
                         Gui.IgnoreGuiInset = true;
                         Gui.ResetOnSpawn = false;
                         Button.Name = "Toggle";
-                        Button.Size = Options.Size or UDim2.new(0, 72, 0, 40);
-                        Button.Position = Options.Position or UDim2.new(0.5, -36, 0, 8);
+                        Button.AnchorPoint = NewVector2(0.5, 0)
+                        Button.Size = Options.Size or UDim2.new(0, Library:Dim(72, 64), 0, Library:Dim(44, 52));
+                        Button.Position = Options.Position or UDim2.new(0.5, 0, 0, 8);
                         Button.BackgroundColor3 = Color3.new(0.0784, 0.0784, 0.0784);
                         Button.BackgroundTransparency = 1;
                         Button.BorderSizePixel = 0;
@@ -613,11 +627,18 @@ Library.Sections.__index = Library.Sections;
                                 end
                         end
                 end
-                function Library:IsMouseOverFrame(Frame)
+                function Library:IsMouseOverFrame(Frame, Input)
                         local AbsPos, AbsSize = Frame.AbsolutePosition, Frame.AbsoluteSize;
-                        local Location = InputService:GetMouseLocation();
-                        local X = Location.X;
-                        local Y = Location.Y - game:GetService("GuiService"):GetGuiInset().Y;
+                        local X, Y
+                        if Input and Input.UserInputType == Enum.UserInputType.Touch then
+                                local Inset = GuiService:GetGuiInset()
+                                X = Input.Position.X - Inset.X
+                                Y = Input.Position.Y - Inset.Y
+                        else
+                                local Location = InputService:GetMouseLocation();
+                                X = Location.X;
+                                Y = Location.Y - GuiService:GetGuiInset().Y;
+                        end
 
                         if X >= AbsPos.X and X <= AbsPos.X + AbsSize.X
                                 and Y >= AbsPos.Y and Y <= AbsPos.Y + AbsSize.Y then
@@ -627,6 +648,9 @@ Library.Sections.__index = Library.Sections;
                 end;
                 function Library:KeybindList()
                         local KeyList = {Keybinds = {}};
+                        local KT = Library:Dim(12, 15)
+                        local KH = Library:Dim(22, 26)
+                        local KR = Library:Dim(15, 20)
                         Library.KeyList = KeyList
                         local KeyOutline = Instance.new('Frame', PlaceHolderUI)
                         local KeyInline = Instance.new('Frame', KeyOutline)
@@ -655,7 +679,7 @@ Library.Sections.__index = Library.Sections;
                         KeyAccent.BorderColor3 = Color3.new(0,0,0)
                         Library:AddThemeObject(KeyAccent)
                         KeyHolder.Name = "KeyHolder"
-                        KeyHolder.Position = UDim2.new(0,0,0,22)
+                        KeyHolder.Position = UDim2.new(0,0,0,KH)
                         KeyHolder.BackgroundColor3 = Color3.new(1,1,1)
                         KeyHolder.BackgroundTransparency = 1
                         KeyHolder.BorderSizePixel = 0
@@ -663,7 +687,7 @@ Library.Sections.__index = Library.Sections;
                         KeyHolder.AutomaticSize = Enum.AutomaticSize.XY
                         UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
                         KeyTitle.Name = "KeyTitle"
-                        KeyTitle.Size = UDim2.new(1,0,0,20)
+                        KeyTitle.Size = UDim2.new(1,0,0,Library:Dim(20, 26))
                         KeyTitle.BackgroundColor3 = Color3.new(1,1,1)
                         KeyTitle.BackgroundTransparency = 1
                         KeyTitle.BorderSizePixel = 0
@@ -671,10 +695,10 @@ Library.Sections.__index = Library.Sections;
                         KeyTitle.Text = "Keybinds"
                         KeyTitle.TextColor3 = Color3.new(1,1,1)
                         KeyTitle.FontFace = Font.new("rbxassetid://12187371840")
-                        KeyTitle.TextSize = 12
+                        KeyTitle.TextSize = KT
                         KeyTitle.TextStrokeTransparency = 0
                         LineThing.Name = "LineThing"
-                        LineThing.Position = UDim2.new(0,0,0,20)
+                        LineThing.Position = UDim2.new(0,0,0,KH)
                         LineThing.Size = UDim2.new(1,0,0,1)
                         LineThing.BackgroundColor3 = Color3.new(0.1765,0.1765,0.1765)
                         LineThing.BorderSizePixel = 0
@@ -686,7 +710,7 @@ Library.Sections.__index = Library.Sections;
                                 local KeyValue = {}
                                 local NewValue = Instance.new('TextLabel', KeyHolder)
                                 NewValue.Name = "NewValue"
-                                NewValue.Size = UDim2.new(0,0,0,15)
+                                NewValue.Size = UDim2.new(0,0,0,KR)
                                 NewValue.BackgroundColor3 = Color3.new(1,1,1)
                                 NewValue.BackgroundTransparency = 1
                                 NewValue.BorderSizePixel = 0
@@ -694,7 +718,7 @@ Library.Sections.__index = Library.Sections;
                                 NewValue.Text = tostring(" ["..Key.."] " .. Name .. " (" .. Mode ..") ")
                                 NewValue.TextColor3 = Color3.new(1,1,1)
                                 NewValue.FontFace = Font.new("rbxassetid://12187371840")
-                                NewValue.TextSize = 12
+                                NewValue.TextSize = KT
                                 NewValue.AutomaticSize = Enum.AutomaticSize.X
                                 NewValue.TextXAlignment = Enum.TextXAlignment.Left
                                 NewValue.Visible = false
@@ -735,9 +759,11 @@ Library.Sections.__index = Library.Sections;
                         local UIListLayout = Instance.new('UIListLayout', ModeInline)
                         local Hold = Instance.new('TextButton', ModeInline)
                         local Toggle = Instance.new('TextButton', ModeInline)
+                        local Slot = Library:Dim(26, 40)
+                        local MR = Library:Dim(15, 22)
                         Icon.Name = "Icon"
-                        Icon.Position = UDim2.new(1, - (count * 20) - (count * 6),0.5,0)
-                        Icon.Size = UDim2.new(0,20,0,10)
+                        Icon.Position = UDim2.new(1, - (count * Slot),0.5,0)
+                        Icon.Size = UDim2.new(0,Library:Dim(20, 32),0,Library:Dim(10, 16))
                         Icon.BackgroundColor3 = Color3.fromRGB(45,45,45)
                         Icon.BorderColor3 = Color3.fromRGB(10,10,10)
                         Icon.AnchorPoint = NewVector2(1,0.5)
@@ -855,8 +881,8 @@ Library.Sections.__index = Library.Sections;
                         AlphaSlide.BorderColor3 = Color3.new(0,0,0)
                         AlphaSlide.ZIndex = 100
                         ModeOutline.Name = "ModeOutline"
-                        ModeOutline.Position = UDim2.new(1,65,0.5,0)
-                        ModeOutline.Size = UDim2.new(0,60,0,12)
+                        ModeOutline.Position = UDim2.new(1,Library:Dim(65, 79),0.5,0)
+                        ModeOutline.Size = UDim2.new(0,Library:Dim(60, 72),0,Library:Dim(12, 18))
                         ModeOutline.BackgroundColor3 = Color3.new(0.1765,0.1765,0.1765)
                         ModeOutline.BorderColor3 = Color3.new(0.0392,0.0392,0.0392)
                         ModeOutline.AnchorPoint = NewVector2(1,0.5)
@@ -872,7 +898,7 @@ Library.Sections.__index = Library.Sections;
                         ModeInline.ZIndex = 100
                         UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
                         Hold.Name = "Hold"
-                        Hold.Size = UDim2.new(1,0,0,15)
+                        Hold.Size = UDim2.new(1,0,0,MR)
                         Hold.BackgroundColor3 = Color3.new(1,1,1)
                         Hold.BackgroundTransparency = 1
                         Hold.BorderSizePixel = 0
@@ -885,7 +911,7 @@ Library.Sections.__index = Library.Sections;
                         Hold.TextStrokeTransparency = 0
                         Hold.ZIndex = 100
                         Toggle.Name = "Toggle"
-                        Toggle.Size = UDim2.new(1,0,0,15)
+                        Toggle.Size = UDim2.new(1,0,0,MR)
                         Toggle.BackgroundColor3 = Color3.new(1,1,1)
                         Toggle.BackgroundTransparency = 1
                         Toggle.BorderSizePixel = 0
@@ -913,10 +939,36 @@ Library.Sections.__index = Library.Sections;
                         local slidingsaturation = false
                         local slidinghue = false
                         local slidingalpha = false
+                        local LockedScrolls = {}
+                        local function LockScrolls()
+                                local A = parent:FindFirstAncestorOfClass("ScrollingFrame")
+                                while A do
+                                        if A.ScrollingEnabled then
+                                                table.insert(LockedScrolls, A)
+                                                A.ScrollingEnabled = false
+                                        end
+                                        A = A:FindFirstAncestorOfClass("ScrollingFrame")
+                                end
+                        end
+                        local function UnlockScrolls()
+                                for _, A in ipairs(LockedScrolls) do
+                                        A.ScrollingEnabled = true
+                                end
+                                table.clear(LockedScrolls)
+                        end
 
-                        local function update()
-                                local real_pos = game:GetService("UserInputService"):GetMouseLocation()
-                                local mouse_position = NewVector2(real_pos.X, real_pos.Y - game:GetService("GuiService"):GetGuiInset().Y)
+                        local function update(input)
+                                local X, Y
+                                if input and input.UserInputType == Enum.UserInputType.Touch then
+                                        local Inset = GuiService:GetGuiInset()
+                                        X = input.Position.X - Inset.X
+                                        Y = input.Position.Y - Inset.Y
+                                else
+                                        local real_pos = InputService:GetMouseLocation()
+                                        X = real_pos.X
+                                        Y = real_pos.Y - GuiService:GetGuiInset().Y
+                                end
+                                local mouse_position = NewVector2(X, Y)
                                 local relative_palette = (mouse_position - Color.AbsolutePosition)
                                 local relative_hue     = (mouse_position - Hue.AbsolutePosition)
                                 local relative_opacity = (mouse_position - Alpha.AbsolutePosition)
@@ -941,15 +993,15 @@ Library.Sections.__index = Library.Sections;
 
                                 if flag then
                                         Library.Flags[flag] = {}
-                                        Library.Flags[flag]["Color"] = Color3.fromRGB(hsv.r * 255, hsv.g * 255, hsv.b * 255)
+                                        Library.Flags[flag]["Color"] = Color3.fromRGB(hsv.R * 255, hsv.G * 255, hsv.B * 255)
                                         Library.Flags[flag]["Transparency"] = alpha
                                 end
 
-                                callback(Color3.fromRGB(hsv.r * 255, hsv.g * 255, hsv.b * 255), alpha)
+                                callback(Color3.fromRGB(hsv.R * 255, hsv.G * 255, hsv.B * 255), alpha)
                         end
 
                         local function set(color, a)
-                                if type(color) == "table" then
+                                if typeof(color) == "table" then
                                         a = color[4]
                                         color = Color3.fromHSV(color[1], color[2], color[3])
                                 end
@@ -974,11 +1026,11 @@ Library.Sections.__index = Library.Sections;
 
                                         if flag then
                                                 Library.Flags[flag] = {}
-                                                Library.Flags[flag]["Color"] = Color3.fromRGB(hsv.r * 255, hsv.g * 255, hsv.b * 255)
+                                                Library.Flags[flag]["Color"] = Color3.fromRGB(hsv.R * 255, hsv.G * 255, hsv.B * 255)
                                                 Library.Flags[flag]["Transparency"] = alpha
                                         end
 
-                                        callback(Color3.fromRGB(hsv.r * 255, hsv.g * 255, hsv.b * 255), alpha)
+                                        callback(Color3.fromRGB(hsv.R * 255, hsv.G * 255, hsv.B * 255), alpha)
                                 end
                         end
 
@@ -989,57 +1041,63 @@ Library.Sections.__index = Library.Sections;
                         Sat.InputBegan:Connect(function(input)
                                 if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
                                         slidingsaturation = true
-                                        update()
+                                        LockScrolls()
+                                        update(input)
                                 end
                         end)
 
                         Sat.InputEnded:Connect(function(input)
                                 if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
                                         slidingsaturation = false
-                                        update()
+                                        UnlockScrolls()
+                                        update(input)
                                 end
                         end)
 
                         Hue.InputBegan:Connect(function(input)
                                 if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
                                         slidinghue = true
-                                        update()
+                                        LockScrolls()
+                                        update(input)
                                 end
                         end)
 
                         Hue.InputEnded:Connect(function(input)
                                 if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
                                         slidinghue = false
-                                        update()
+                                        UnlockScrolls()
+                                        update(input)
                                 end
                         end)
 
                         Alpha.InputBegan:Connect(function(input)
                                 if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
                                         slidingalpha = true
-                                        update()
+                                        LockScrolls()
+                                        update(input)
                                 end
                         end)
 
                         Alpha.InputEnded:Connect(function(input)
                                 if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
                                         slidingalpha = false
-                                        update()
+                                        UnlockScrolls()
+                                        update(input)
                                 end
                         end)
 
                         Library:Connection(game:GetService("UserInputService").InputChanged, function(input)
                                 if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
                                         if slidingalpha then
-                                                update()
+                                                update(input)
                                         end
 
                                         if slidinghue then
-                                                update()
+                                                update(input)
                                         end
 
                                         if slidingsaturation then
-                                                update()
+                                                update(input)
                                         end
                                 end
                         end)
@@ -1048,6 +1106,7 @@ Library.Sections.__index = Library.Sections;
                                         slidingsaturation = false
                                         slidinghue = false
                                         slidingalpha = false
+                                        UnlockScrolls()
                                 end
                         end)
 
@@ -1094,7 +1153,7 @@ Library.Sections.__index = Library.Sections;
                         end)
                         Library:Connection(game:GetService("UserInputService").InputBegan, function(Input)
                                 if ModeOutline.Visible and (Input.UserInputType == Enum.UserInputType.MouseButton1 or Input.UserInputType == Enum.UserInputType.Touch) then
-                                        if not Library:IsMouseOverFrame(Icon) then
+                                        if not Library:IsMouseOverFrame(Icon, Input) then
                                                 ModeOutline.Visible = false
                                         end
                                 end
@@ -1108,7 +1167,7 @@ Library.Sections.__index = Library.Sections;
 
                         Library:Connection(game:GetService("UserInputService").InputBegan, function(Input)
                                 if ColorWindow.Visible and (Input.UserInputType == Enum.UserInputType.MouseButton1 or Input.UserInputType == Enum.UserInputType.Touch) then
-                                        if not Library:IsMouseOverFrame(ColorWindow) and not Library:IsMouseOverFrame(Icon) then
+                                        if not Library:IsMouseOverFrame(ColorWindow, Input) and not Library:IsMouseOverFrame(Icon, Input) then
                                                 ColorWindow.Visible = false
                                                 parent.ZIndex = 1
                                         end
@@ -1132,6 +1191,7 @@ Library.Sections.__index = Library.Sections;
                         if typeof(Window.Size) == "UDim2" and Window.Size.X.Offset > 0 then
                                 BaseWidth = Window.Size.X.Offset
                         end
+                        local TabH = Library:Dim(22, 32)
                         local ScreenGui = Instance.new('ScreenGui', game.CoreGui)
                         local Outline = Instance.new('Frame', ScreenGui)
                         local Inline = Instance.new('Frame', Outline)
@@ -1141,6 +1201,7 @@ Library.Sections.__index = Library.Sections;
                         local Tabs = Instance.new('Frame', HolderInline)
                         local UIListLayout = Instance.new('UIListLayout', Tabs)
                         local DragButton = Instance.new('TextButton', Outline)
+                        local DragBar = Instance.new('TextButton', Outline)
                         local KeybindList = Library:KeybindList()
                         ScreenGui.DisplayOrder = 2
                         Outline.Name = "Outline"
@@ -1174,7 +1235,7 @@ Library.Sections.__index = Library.Sections;
                         HolderInline.BorderSizePixel = 0
                         HolderInline.BorderColor3 = Color3.new(0,0,0)
                         Tabs.Name = "Tabs"
-                        Tabs.Size = UDim2.new(1,0,0,22)
+                        Tabs.Size = UDim2.new(1,0,0,TabH)
                         Tabs.BackgroundColor3 = Color3.new(1,1,1)
                         Tabs.BackgroundTransparency = 1
                         Tabs.BorderSizePixel = 0
@@ -1192,45 +1253,61 @@ Library.Sections.__index = Library.Sections;
                         DragButton.AutoButtonColor = false
                         DragButton.FontFace = Font.new("rbxassetid://12187371840")
                         DragButton.TextSize = 14
+                        DragBar.Name = "DragBar"
+                        DragBar.Position = UDim2.new(0,0,0,14 + TabH)
+                        DragBar.Size = UDim2.new(1,0,0,11)
+                        DragBar.BackgroundColor3 = Color3.new(1,1,1)
+                        DragBar.BackgroundTransparency = 1
+                        DragBar.BorderSizePixel = 0
+                        DragBar.BorderColor3 = Color3.new(0,0,0)
+                        DragBar.Text = ""
+                        DragBar.TextColor3 = Color3.new(0,0,0)
+                        DragBar.AutoButtonColor = false
+                        DragBar.FontFace = Font.new("rbxassetid://12187371840")
+                        DragBar.TextSize = 14
+
+                        local function LayoutHeight(Layout)
+                                if Layout then
+                                        local Size = Layout.AbsoluteContentSize
+                                        if Size then
+                                                return Size.Y
+                                        end
+                                end
+                                return 0
+                        end
 
                         function Window:UpdateSize()
                                 local ContentHeight = 0
-                                local TopOffset = 35
+                                local TopOffset = TabH + 13
                                 for _, Pg in pairs(Window.Pages) do
                                         if Pg.Open then
                                                 if Pg.Icons then
-                                                        TopOffset = 75
+                                                        TopOffset = TabH + 13 + Library:Dim(40, 60)
                                                         for _, Wp in pairs(Pg.Weapons) do
                                                                 if Wp.Open then
                                                                         local LLayout = Wp.Elements.LeftLayout
                                                                         local RLayout = Wp.Elements.RightLayout
-                                                                        if LLayout then
-                                                                                ContentHeight = math.max(ContentHeight, LLayout.AbsoluteContentSize.Y)
-                                                                        end
-                                                                        if RLayout then
-                                                                                ContentHeight = math.max(ContentHeight, RLayout.AbsoluteContentSize.Y)
-                                                                        end
+                                                                        ContentHeight = math.max(ContentHeight, LayoutHeight(LLayout))
+                                                                        ContentHeight = math.max(ContentHeight, LayoutHeight(RLayout))
                                                                 end
                                                         end
                                                 else
                                                         local LLayout = Pg.Elements.LeftLayout
                                                         local RLayout = Pg.Elements.RightLayout
-                                                        if LLayout then
-                                                                ContentHeight = math.max(ContentHeight, LLayout.AbsoluteContentSize.Y)
-                                                        end
-                                                        if RLayout then
-                                                                ContentHeight = math.max(ContentHeight, RLayout.AbsoluteContentSize.Y)
-                                                        end
+                                                        ContentHeight = math.max(ContentHeight, LayoutHeight(LLayout))
+                                                        ContentHeight = math.max(ContentHeight, LayoutHeight(RLayout))
                                                 end
                                         end
                                 end
                                 local ScreenSize = ScreenGui.AbsoluteSize
-                                local MaxHeight = math.max(ScreenSize.Y - 24, 140)
-                                local MaxWidth = math.max(ScreenSize.X - 16, 320)
-                                local Needed = ContentHeight + TopOffset + 27
-                                local Height = math.clamp(Needed, 140, MaxHeight)
-                                local Width = math.clamp(BaseWidth, 320, MaxWidth)
-                                Outline.Size = UDim2.new(0, Width, 0, Height)
+                                if ScreenSize then
+                                        local MaxHeight = math.max(ScreenSize.Y - Library:Dim(24, 40), Library:Dim(140, 220))
+                                        local MaxWidth = math.max(ScreenSize.X - 16, 320)
+                                        local Needed = ContentHeight + TopOffset + 27
+                                        local Height = math.clamp(Needed, Library:Dim(140, 220), MaxHeight)
+                                        local Width = math.clamp(BaseWidth, 320, MaxWidth)
+                                        Outline.Size = UDim2.new(0, Width, 0, Height)
+                                end
                         end
                         local SizeUpdateQueued = false
                         function Window:QueueSizeUpdate()
@@ -1249,13 +1326,15 @@ Library.Sections.__index = Library.Sections;
                         local Dragging = false
                         local DragStart = nil
                         local DragOrigin = nil
-                        Library:Connection(DragButton.InputBegan, function(Input)
+                        local function BeginDrag(Input)
                                 if Input.UserInputType == Enum.UserInputType.MouseButton1 or Input.UserInputType == Enum.UserInputType.Touch then
                                         Dragging = true
                                         DragStart = Input.Position
                                         DragOrigin = Outline.Position
                                 end
-                        end)
+                        end
+                        Library:Connection(DragButton.InputBegan, BeginDrag)
+                        Library:Connection(DragBar.InputBegan, BeginDrag)
                         Library:Connection(InputService.InputChanged, function(Input)
                                 if Dragging and (Input.UserInputType == Enum.UserInputType.MouseMovement or Input.UserInputType == Enum.UserInputType.Touch) then
                                         local Delta = Input.Position - DragStart
@@ -1272,6 +1351,7 @@ Library.Sections.__index = Library.Sections;
                                 TabHolder = Tabs,
                                 Holder = HolderInline
                         }
+                        Window.TabH = TabH
 
                         Library:Connection(game:GetService("UserInputService").InputBegan, function(Input)
                                 if Input.KeyCode == Library.UIKey then
@@ -1324,9 +1404,14 @@ Library.Sections.__index = Library.Sections;
             local UIListLayout_2 = Instance.new('UIListLayout', Right)
             local LeftPad = Instance.new('Frame', Left)
             local RightPad = Instance.new('Frame', Right)
+            local LeftTop = Instance.new('Frame', Left)
+            local RightTop = Instance.new('Frame', Right)
+            local PageTabH = Page.Window.TabH
+            Page.TabH = PageTabH
+            local ColY = PageTabH + 13
             Left.Name = "Left"
-            Left.Position = UDim2.new(0,5,0,35)
-            Left.Size = UDim2.new(0.485,-3,1,-40)
+            Left.Position = UDim2.new(0,5,0,ColY)
+            Left.Size = UDim2.new(0.485,-3,1,-(ColY + 5))
             Left.BackgroundColor3 = Color3.new(1,1,1)
             Left.BorderSizePixel = 0
             Left.BackgroundTransparency = 1
@@ -1336,15 +1421,15 @@ Library.Sections.__index = Library.Sections;
             Left.ScrollingDirection = Enum.ScrollingDirection.Y
             Left.AutomaticCanvasSize = Enum.AutomaticSize.Y
             Left.CanvasSize = UDim2.new(0,0,0,0)
-            Left.ScrollBarThickness = 3
+            Left.ScrollBarThickness = Library:Dim(3, 6)
             Left.ScrollBarImageColor3 = Library.Accent
             Left.ScrollBarImageTransparency = 0.3
             Left.ElasticBehavior = Enum.ElasticBehavior.WhenScrollable
             Left.ScrollingEnabled = true
             Library:AddThemeObject(Left)
             Right.Name = "Right"
-            Right.Position = UDim2.new(1,-5,0,35)
-            Right.Size = UDim2.new(0.485,-3,1,-40)
+            Right.Position = UDim2.new(1,-5,0,ColY)
+            Right.Size = UDim2.new(0.485,-3,1,-(ColY + 5))
             Right.BackgroundColor3 = Color3.new(1,1,1)
             Right.BorderSizePixel = 0
             Right.BorderColor3 = Color3.new(0,0,0)
@@ -1354,7 +1439,7 @@ Library.Sections.__index = Library.Sections;
             Right.ScrollingDirection = Enum.ScrollingDirection.Y
             Right.AutomaticCanvasSize = Enum.AutomaticSize.Y
             Right.CanvasSize = UDim2.new(0,0,0,0)
-            Right.ScrollBarThickness = 3
+            Right.ScrollBarThickness = Library:Dim(3, 6)
             Right.ScrollBarImageColor3 = Library.Accent
             Right.ScrollBarImageTransparency = 0.3
             Right.ElasticBehavior = Enum.ElasticBehavior.WhenScrollable
@@ -1372,10 +1457,22 @@ Library.Sections.__index = Library.Sections;
             RightPad.BackgroundTransparency = 1
             RightPad.BorderSizePixel = 0
             RightPad.LayoutOrder = 999999
+            LeftTop.Name = "LeftTop"
+            LeftTop.Size = UDim2.new(1,0,0,10)
+            LeftTop.BackgroundColor3 = Color3.new(1,1,1)
+            LeftTop.BackgroundTransparency = 1
+            LeftTop.BorderSizePixel = 0
+            LeftTop.LayoutOrder = -999999
+            RightTop.Name = "RightTop"
+            RightTop.Size = UDim2.new(1,0,0,10)
+            RightTop.BackgroundColor3 = Color3.new(1,1,1)
+            RightTop.BackgroundTransparency = 1
+            RightTop.BorderSizePixel = 0
+            RightTop.LayoutOrder = -999999
             UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
-            UIListLayout.Padding = UDim.new(0,12)
+            UIListLayout.Padding = UDim.new(0,Library:Dim(12, 14))
             UIListLayout_2.SortOrder = Enum.SortOrder.LayoutOrder
-            UIListLayout_2.Padding = UDim.new(0,12)
+            UIListLayout_2.Padding = UDim.new(0,Library:Dim(12, 14))
             Library:Connection(UIListLayout:GetPropertyChangedSignal("AbsoluteContentSize"), function()
                 Page.Window:QueueSizeUpdate()
             end)
@@ -1395,6 +1492,7 @@ Library.Sections.__index = Library.Sections;
                         TabButton.TextSize = Library.FontSize
                         TabButton.TextStrokeTransparency = 0
                         TabButton.LineHeight = 1.1
+                        TabButton.TextTruncate = Enum.TextTruncate.AtEnd
                         TabAccent.Name = "TabAccent"
                         TabAccent.Size = UDim2.new(1,0,0,1)
                         TabAccent.BackgroundColor3 = Library.Accent
@@ -1412,8 +1510,8 @@ Library.Sections.__index = Library.Sections;
             WeaponOutline.Name = "WeaponOutline"
             WeaponOutline.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
             WeaponOutline.BorderColor3 = Color3.fromRGB(10, 10, 10)
-            WeaponOutline.Position = UDim2.new(0, 5, 0, 25)
-            WeaponOutline.Size = UDim2.new(1, -10, 0, 40)
+            WeaponOutline.Position = UDim2.new(0, 5, 0, PageTabH + 3)
+            WeaponOutline.Size = UDim2.new(1, -10, 0, Library:Dim(40, 60))
             WeaponOutline.Visible = false
 
             WeaponInline.Name = "WeaponInline"
@@ -1505,6 +1603,8 @@ Library.Sections.__index = Library.Sections;
                         local UIListLayout_2 = Instance.new('UIListLayout', Right)
                         local LeftPad = Instance.new('Frame', Left)
                         local RightPad = Instance.new('Frame', Right)
+                        local LeftTop = Instance.new('Frame', Left)
+                        local RightTop = Instance.new('Frame', Right)
             local New = Instance.new("ImageButton")
                         New.Name = "New"
             New.Parent = Weapon.Window.Elements.WeaponInline
@@ -1515,9 +1615,11 @@ Library.Sections.__index = Library.Sections;
             New.Size = UDim2.new(0.200000003, 0, 1, 0)
             New.Image = Weapon.Icon
             New.ScaleType = Enum.ScaleType.Fit
+                        local WTabH = Weapon.Window.TabH
+                        local WColY = WTabH + 3 + Library:Dim(40, 60) + 10
                         Left.Name = "Left"
-                        Left.Position = UDim2.new(0,5,0,75)
-                        Left.Size = UDim2.new(0.485,-3,1, -80)
+                        Left.Position = UDim2.new(0,5,0,WColY)
+                        Left.Size = UDim2.new(0.485,-3,1, -(WColY + 5))
                         Left.BackgroundColor3 = Color3.new(1,1,1)
                         Left.BorderSizePixel = 0
                         Left.BackgroundTransparency = 1
@@ -1527,15 +1629,15 @@ Library.Sections.__index = Library.Sections;
                         Left.ScrollingDirection = Enum.ScrollingDirection.Y
                         Left.AutomaticCanvasSize = Enum.AutomaticSize.Y
                         Left.CanvasSize = UDim2.new(0,0,0,0)
-                        Left.ScrollBarThickness = 3
+                        Left.ScrollBarThickness = Library:Dim(3, 6)
                         Left.ScrollBarImageColor3 = Library.Accent
                         Left.ScrollBarImageTransparency = 0.3
                         Left.ElasticBehavior = Enum.ElasticBehavior.WhenScrollable
                         Left.ScrollingEnabled = true
                         Library:AddThemeObject(Left)
                         Right.Name = "Right"
-                        Right.Position = UDim2.new(1,-5,0,75)
-                        Right.Size = UDim2.new(0.485,-3,1, -80)
+                        Right.Position = UDim2.new(1,-5,0,WColY)
+                        Right.Size = UDim2.new(0.485,-3,1, -(WColY + 5))
                         Right.BackgroundColor3 = Color3.new(1,1,1)
                         Right.BorderSizePixel = 0
                         Right.BorderColor3 = Color3.new(0,0,0)
@@ -1545,7 +1647,7 @@ Library.Sections.__index = Library.Sections;
                         Right.ScrollingDirection = Enum.ScrollingDirection.Y
                         Right.AutomaticCanvasSize = Enum.AutomaticSize.Y
                         Right.CanvasSize = UDim2.new(0,0,0,0)
-                        Right.ScrollBarThickness = 3
+                        Right.ScrollBarThickness = Library:Dim(3, 6)
                         Right.ScrollBarImageColor3 = Library.Accent
                         Right.ScrollBarImageTransparency = 0.3
                         Right.ElasticBehavior = Enum.ElasticBehavior.WhenScrollable
@@ -1563,10 +1665,22 @@ Library.Sections.__index = Library.Sections;
                         RightPad.BackgroundTransparency = 1
                         RightPad.BorderSizePixel = 0
                         RightPad.LayoutOrder = 999999
+                        LeftTop.Name = "LeftTop"
+                        LeftTop.Size = UDim2.new(1,0,0,10)
+                        LeftTop.BackgroundColor3 = Color3.new(1,1,1)
+                        LeftTop.BackgroundTransparency = 1
+                        LeftTop.BorderSizePixel = 0
+                        LeftTop.LayoutOrder = -999999
+                        RightTop.Name = "RightTop"
+                        RightTop.Size = UDim2.new(1,0,0,10)
+                        RightTop.BackgroundColor3 = Color3.new(1,1,1)
+                        RightTop.BackgroundTransparency = 1
+                        RightTop.BorderSizePixel = 0
+                        RightTop.LayoutOrder = -999999
                         UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
-                        UIListLayout.Padding = UDim.new(0,12)
+                        UIListLayout.Padding = UDim.new(0,Library:Dim(12, 14))
                         UIListLayout_2.SortOrder = Enum.SortOrder.LayoutOrder
-                        UIListLayout_2.Padding = UDim.new(0,12)
+                        UIListLayout_2.Padding = UDim.new(0,Library:Dim(12, 14))
                         Library:Connection(UIListLayout:GetPropertyChangedSignal("AbsoluteContentSize"), function()
                                 Weapon.Window.Window:QueueSizeUpdate()
                         end)
@@ -1627,6 +1741,8 @@ Library.Sections.__index = Library.Sections;
                         local SectionAccent = Instance.new('Frame', SectionInline)
                         local Title = Instance.new('TextLabel', SectionOutline)
                         local TextBorder = Instance.new('Frame', SectionOutline)
+                        local PadX = Library:Dim(7, 9)
+                        local PadY = Library:Dim(10, 14)
                         SectionOutline.Name = "SectionOutline"
                         SectionOutline.Size = UDim2.new(1,0,0,20)
                         SectionOutline.BackgroundColor3 = Color3.new(0.1765,0.1765,0.1765)
@@ -1641,8 +1757,8 @@ Library.Sections.__index = Library.Sections;
                         SectionInline.BorderSizePixel = 0
                         SectionInline.BorderColor3 = Color3.new(0,0,0)
                         Container.Name = "Container"
-                        Container.Position = UDim2.new(0,7,0,10)
-                        Container.Size = UDim2.new(1,-14,1,-10)
+                        Container.Position = UDim2.new(0,PadX,0,PadY)
+                        Container.Size = UDim2.new(1,-(PadX * 2),1,-PadY)
                         Container.BackgroundColor3 = Color3.new(1,1,1)
                         Container.BackgroundTransparency = 1
                         Container.BorderSizePixel = 0
@@ -1683,16 +1799,20 @@ Library.Sections.__index = Library.Sections;
                         TextBorder.BorderSizePixel = 0
                         TextBorder.BorderColor3 = Color3.new(0,0,0)
                         UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
-                        UIListLayout.Padding = UDim.new(0,10)
+                        UIListLayout.Padding = UDim.new(0,Library:Dim(10, 12))
 
                         Section.Elements = {
                                 SectionContent = Container;
                                 SectionHolder = SectionOutline;
                         }
 
+                        local function SyncTextBorder()
+                                TextBorder.Size = UDim2.new(0,Title.TextBounds.X + 8,0,4)
+                        end
+                        Library:Connection(Title:GetPropertyChangedSignal("TextBounds"), SyncTextBorder)
+                        SyncTextBorder()
+
                         Section.Page.Sections[#Section.Page.Sections + 1] = Section
-                        wait(0.01)
-                        TextBorder.Size = UDim2.new(0,Title.TextBounds.X + 8,0,4)
                         return setmetatable(Section, Library.Sections)
                 end
                 function Sections:Toggle(Properties)
@@ -1735,8 +1855,9 @@ Library.Sections.__index = Library.Sections;
                         local Outline = Instance.new('Frame', NewToggle)
                         local Inline = Instance.new('Frame', Outline)
                         local Title = Instance.new('TextLabel', NewToggle)
+                        local RH = Library:Dim(10, 16)
                         NewToggle.Name = "NewToggle"
-                        NewToggle.Size = UDim2.new(1,0,0,10)
+                        NewToggle.Size = UDim2.new(1,0,0,RH)
                         NewToggle.BackgroundColor3 = Color3.new(1,1,1)
                         NewToggle.BackgroundTransparency = 1
                         NewToggle.BorderSizePixel = 0
@@ -1747,7 +1868,7 @@ Library.Sections.__index = Library.Sections;
                         NewToggle.FontFace = Font.new("rbxassetid://12187371840")
                         NewToggle.TextSize = 14
                         Outline.Name = "Outline"
-                        Outline.Size = UDim2.new(0,10,0,10)
+                        Outline.Size = UDim2.new(0,RH,0,RH)
                         Outline.BackgroundColor3 = Color3.new(0.1765,0.1765,0.1765)
                         Outline.BorderColor3 = Color3.new(0.0392,0.0392,0.0392)
                         Inline.Name = "Inline"
@@ -1757,8 +1878,8 @@ Library.Sections.__index = Library.Sections;
                         Inline.BorderSizePixel = 0
                         Inline.BorderColor3 = Color3.new(0,0,0)
                         Title.Name = "Title"
-                        Title.Position = UDim2.new(0,15,0,0)
-                        Title.Size = UDim2.new(1,0,0,10)
+                        Title.Position = UDim2.new(0,RH + 5,0,0)
+                        Title.Size = UDim2.new(1,-(RH + 5),1,0)
                         Title.BackgroundColor3 = Color3.new(1,1,1)
                         Title.BackgroundTransparency = 1
                         Title.BorderSizePixel = 0
@@ -1855,9 +1976,12 @@ Library.Sections.__index = Library.Sections;
                                 local Toggle = Instance.new('TextButton', ModeInline)
                                 local Always = Instance.new('TextButton', ModeInline)
                                 local ListValue = Library.KeyList:NewKey(tostring(Keybind.State):gsub("Enum.KeyCode.", ""), Title.Text, Keybind.Mode)
+                                local KW = Library:Dim(40, 54)
+                                local KH = Library:Dim(12, 18)
+                                local MR = Library:Dim(15, 22)
                                 Outline.Name = "Outline"
                                 Outline.Position = UDim2.new(1,0,0.5,0)
-                                Outline.Size = UDim2.new(0,40,0,12)
+                                Outline.Size = UDim2.new(0,KW,0,KH)
                                 Outline.BackgroundColor3 = Color3.new(0.1765,0.1765,0.1765)
                                 Outline.BorderColor3 = Color3.new(0.0392,0.0392,0.0392)
                                 Outline.AnchorPoint = NewVector2(1,0.5)
@@ -1881,8 +2005,8 @@ Library.Sections.__index = Library.Sections;
                                 Value.TextSize = Library.FontSize
                                 Value.TextStrokeTransparency = 0
                                 ModeOutline.Name = "ModeOutline"
-                                ModeOutline.Position = UDim2.new(1,65,0.5,0)
-                                ModeOutline.Size = UDim2.new(0,60,0,12)
+                                ModeOutline.Position = UDim2.new(1,KW + 25,0.5,0)
+                                ModeOutline.Size = UDim2.new(0,Library:Dim(60, 72),0,KH)
                                 ModeOutline.BackgroundColor3 = Color3.new(0.1765,0.1765,0.1765)
                                 ModeOutline.BorderColor3 = Color3.new(0.0392,0.0392,0.0392)
                                 ModeOutline.AnchorPoint = NewVector2(1,0.5)
@@ -1896,7 +2020,7 @@ Library.Sections.__index = Library.Sections;
                                 ModeInline.BorderColor3 = Color3.new(0,0,0)
                                 UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
                                 Hold.Name = "Hold"
-                                Hold.Size = UDim2.new(1,0,0,15)
+                                Hold.Size = UDim2.new(1,0,0,MR)
                                 Hold.BackgroundColor3 = Color3.new(1,1,1)
                                 Hold.BackgroundTransparency = 1
                                 Hold.BorderSizePixel = 0
@@ -1908,7 +2032,7 @@ Library.Sections.__index = Library.Sections;
                                 Hold.TextSize = Library.FontSize
                                 Hold.TextStrokeTransparency = 0
                                 Toggle.Name = "Toggle"
-                                Toggle.Size = UDim2.new(1,0,0,15)
+                                Toggle.Size = UDim2.new(1,0,0,MR)
                                 Toggle.BackgroundColor3 = Color3.new(1,1,1)
                                 Toggle.BackgroundTransparency = 1
                                 Toggle.BorderSizePixel = 0
@@ -1920,7 +2044,7 @@ Library.Sections.__index = Library.Sections;
                                 Toggle.TextSize = Library.FontSize
                                 Toggle.TextStrokeTransparency = 0
                                 Always.Name = "Always"
-                                Always.Size = UDim2.new(1,0,0,15)
+                                Always.Size = UDim2.new(1,0,0,MR)
                                 Always.BackgroundColor3 = Color3.new(1,1,1)
                                 Always.BackgroundTransparency = 1
                                 Always.BorderSizePixel = 0
@@ -1985,6 +2109,9 @@ Library.Sections.__index = Library.Sections;
                                 end
                                 set(Keybind.State)
                                 set(Keybind.Mode)
+                                local function RestoreKeyText()
+                                        Value.Text = Key and (Library.Keys[Key] or tostring(Key):gsub("Enum.KeyCode.", "")) or "None"
+                                end
                                 Outline.MouseButton1Click:Connect(function()
                                         if not Keybind.Binding then
 
@@ -1993,6 +2120,13 @@ Library.Sections.__index = Library.Sections;
                                                 Keybind.Binding = Library:Connection(
                                                         game:GetService("UserInputService").InputBegan,
                                                         function(input, gpe)
+                                                                if input.UserInputType == Enum.UserInputType.Touch then
+                                                                        Library:Disconnect(Keybind.Binding)
+                                                                        task.wait()
+                                                                        Keybind.Binding = nil
+                                                                        RestoreKeyText()
+                                                                        return
+                                                                end
                                                                 set(
                                                                         input.UserInputType == Enum.UserInputType.Keyboard and input.KeyCode
                                                                                 or input.UserInputType
@@ -2080,7 +2214,7 @@ Library.Sections.__index = Library.Sections;
                                 end)
                                 Library:Connection(game:GetService("UserInputService").InputBegan, function(Input)
                                         if ModeOutline.Visible and (Input.UserInputType == Enum.UserInputType.MouseButton1 or Input.UserInputType == Enum.UserInputType.Touch) then
-                                                if not Library:IsMouseOverFrame(ModeOutline) then
+                                                if not Library:IsMouseOverFrame(ModeOutline, Input) then
                                                         ModeOutline.Visible = false
                                                 end
                                         end
@@ -2218,8 +2352,13 @@ Library.Sections.__index = Library.Sections;
                         local Subtract = Instance.new('TextButton', Outline)
                         local Title = Instance.new('TextLabel', NewSlider)
                         local Value = Instance.new('TextLabel', NewSlider)
+                        local Hitbox = Instance.new('TextButton', NewSlider)
+                        local RH = Library:Dim(22, 32)
+                        local TH = Library:Dim(10, 15)
+                        local TrackH = Library:Dim(7, 10)
+                        local BtnS = Library:Dim(12, 18)
                         NewSlider.Name = "NewSlider"
-                        NewSlider.Size = UDim2.new(1,0,0,22)
+                        NewSlider.Size = UDim2.new(1,0,0,RH)
                         NewSlider.BackgroundColor3 = Color3.new(1,1,1)
                         NewSlider.BackgroundTransparency = 1
                         NewSlider.BorderSizePixel = 0
@@ -2231,7 +2370,7 @@ Library.Sections.__index = Library.Sections;
                         NewSlider.TextSize = 14
                         Outline.Name = "Outline"
                         Outline.Position = UDim2.new(0,15,1,0)
-                        Outline.Size = UDim2.new(1,-30,0,7)
+                        Outline.Size = UDim2.new(1,-30,0,TrackH)
                         Outline.BackgroundColor3 = Color3.new(0.1765,0.1765,0.1765)
                         Outline.BorderColor3 = Color3.new(0.0392,0.0392,0.0392)
                         Outline.AnchorPoint = NewVector2(0,1)
@@ -2254,7 +2393,8 @@ Library.Sections.__index = Library.Sections;
                         Library:AddThemeObject(Accent)
                         Add.Name = "Add"
                         Add.Position = UDim2.new(1,5,0.5,0)
-                        Add.Size = UDim2.new(0,10,0,10)
+                        Add.Size = UDim2.new(0,BtnS,0,BtnS)
+                        Add.ZIndex = 3
                         Add.BackgroundColor3 = Color3.new(1,1,1)
                         Add.BackgroundTransparency = 1
                         Add.BorderSizePixel = 0
@@ -2268,7 +2408,8 @@ Library.Sections.__index = Library.Sections;
                         Add.TextStrokeTransparency = 0
                         Subtract.Name = "Subtract"
                         Subtract.Position = UDim2.new(0,-15,0.5,0)
-                        Subtract.Size = UDim2.new(0,10,0,10)
+                        Subtract.Size = UDim2.new(0,BtnS,0,BtnS)
+                        Subtract.ZIndex = 3
                         Subtract.BackgroundColor3 = Color3.new(1,1,1)
                         Subtract.BackgroundTransparency = 1
                         Subtract.BorderSizePixel = 0
@@ -2282,7 +2423,7 @@ Library.Sections.__index = Library.Sections;
                         Subtract.TextStrokeTransparency = 0
                         Title.Name = "Title"
                         Title.Position = UDim2.new(0,15,0,0)
-                        Title.Size = UDim2.new(1,0,0,10)
+                        Title.Size = UDim2.new(1,-30,0,TH)
                         Title.BackgroundColor3 = Color3.new(1,1,1)
                         Title.BackgroundTransparency = 1
                         Title.BorderSizePixel = 0
@@ -2295,7 +2436,7 @@ Library.Sections.__index = Library.Sections;
                         Title.TextStrokeTransparency = 0
                         Value.Name = "Value"
                         Value.Position = UDim2.new(0,15,0,0)
-                        Value.Size = UDim2.new(1,-30,0,10)
+                        Value.Size = UDim2.new(1,-30,0,TH)
                         Value.BackgroundColor3 = Color3.new(1,1,1)
                         Value.BackgroundTransparency = 1
                         Value.BorderSizePixel = 0
@@ -2305,6 +2446,19 @@ Library.Sections.__index = Library.Sections;
                         Value.TextSize = Library.FontSize
                         Value.TextXAlignment = Enum.TextXAlignment.Right
                         Value.TextStrokeTransparency = 0
+                        Hitbox.Name = "Hitbox"
+                        Hitbox.Position = UDim2.new(0,0,0,TH - 2)
+                        Hitbox.Size = UDim2.new(1,0,1,10 - TH)
+                        Hitbox.BackgroundColor3 = Color3.new(1,1,1)
+                        Hitbox.BackgroundTransparency = 1
+                        Hitbox.BorderSizePixel = 0
+                        Hitbox.BorderColor3 = Color3.new(0,0,0)
+                        Hitbox.Text = ""
+                        Hitbox.TextColor3 = Color3.new(0,0,0)
+                        Hitbox.AutoButtonColor = false
+                        Hitbox.FontFace = Font.new("rbxassetid://12187371840")
+                        Hitbox.TextSize = 14
+                        Hitbox.ZIndex = 2
 
                         local Sliding = false
                         local Val = Slider.State
@@ -2324,38 +2478,83 @@ Library.Sections.__index = Library.Sections;
                                 Slider.Callback(value)
                         end
                         local function Slide(input)
-                                local sizeX = (input.Position.X - Outline.AbsolutePosition.X) / Outline.AbsoluteSize.X
+                                if Outline.AbsoluteSize.X <= 0 then
+                                        return
+                                end
+                                local X = input.Position.X
+                                if input.UserInputType == Enum.UserInputType.Touch then
+                                        X = X - GuiService:GetGuiInset().X
+                                end
+                                local sizeX = math.clamp((X - Outline.AbsolutePosition.X) / Outline.AbsoluteSize.X, 0, 1)
                                 local value = ((Slider.Max - Slider.Min) * sizeX) + Slider.Min
                                 Set(value)
                         end
                         local function IsPress(input)
                                 return input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch
                         end
-                        Library:Connection(NewSlider.InputBegan, function(input)
-                                if IsPress(input) then
+                        local LockedScrolls = {}
+                        local function LockScrolls()
+                                local A = NewSlider:FindFirstAncestorOfClass("ScrollingFrame")
+                                while A do
+                                        if A.ScrollingEnabled then
+                                                table.insert(LockedScrolls, A)
+                                                A.ScrollingEnabled = false
+                                        end
+                                        A = A:FindFirstAncestorOfClass("ScrollingFrame")
+                                end
+                        end
+                        local function UnlockScrolls()
+                                for _, A in ipairs(LockedScrolls) do
+                                        A.ScrollingEnabled = true
+                                end
+                                table.clear(LockedScrolls)
+                        end
+                        local function StartSlide(input)
+                                if not Sliding then
                                         Sliding = true
-                                        Slide(input)
+                                        LockScrolls()
+                                end
+                                Slide(input)
+                        end
+                        local function StopSlide()
+                                if Sliding then
+                                        Sliding = false
+                                        UnlockScrolls()
+                                end
+                        end
+                        Library:Connection(NewSlider.InputBegan, function(input)
+                                if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                                        StartSlide(input)
                                 end
                         end)
                         Library:Connection(NewSlider.InputEnded, function(input)
                                 if IsPress(input) then
-                                        Sliding = false
+                                        StopSlide()
+                                end
+                        end)
+                        Library:Connection(Hitbox.InputBegan, function(input)
+                                if IsPress(input) then
+                                        StartSlide(input)
+                                end
+                        end)
+                        Library:Connection(Hitbox.InputEnded, function(input)
+                                if IsPress(input) then
+                                        StopSlide()
                                 end
                         end)
                         Library:Connection(Accent.InputBegan, function(input)
                                 if IsPress(input) then
-                                        Sliding = true
-                                        Slide(input)
+                                        StartSlide(input)
                                 end
                         end)
                         Library:Connection(Accent.InputEnded, function(input)
                                 if IsPress(input) then
-                                        Sliding = false
+                                        StopSlide()
                                 end
                         end)
                         Library:Connection(game:GetService("UserInputService").InputEnded, function(input)
                                 if IsPress(input) then
-                                        Sliding = false
+                                        StopSlide()
                                 end
                         end)
                         Library:Connection(game:GetService("UserInputService").InputChanged, function(input)
@@ -2373,12 +2572,40 @@ Library.Sections.__index = Library.Sections;
                                 Library:RemoveThemeObject(Title)
                                 Title.TextColor3 = Color3.new(0.5686,0.5686,0.5686)
                         end)
-                        Library:Connection(Add.MouseButton1Down, function()
-                                Set(Val + 1)
-                        end)
-                        Library:Connection(Subtract.MouseButton1Down, function()
-                                Set(Val - 1)
-                        end)
+                        local function BindStep(Btn, Sign)
+                                local Holding = false
+                                Library:Connection(Btn.InputBegan, function(input)
+                                        if IsPress(input) then
+                                                Holding = true
+                                                Set(Val + Sign)
+                                                task.spawn(function()
+                                                        task.wait(0.3)
+                                                        local Step = Sign
+                                                        local Ticks = 0
+                                                        while Holding do
+                                                                Set(Val + Step)
+                                                                Ticks = Ticks + 1
+                                                                if Ticks % 10 == 0 and math.abs(Step) < 16 then
+                                                                        Step = Step * 2
+                                                                end
+                                                                task.wait(0.05)
+                                                        end
+                                                end)
+                                        end
+                                end)
+                                Library:Connection(Btn.InputEnded, function(input)
+                                        if IsPress(input) then
+                                                Holding = false
+                                        end
+                                end)
+                                Library:Connection(InputService.InputEnded, function(input)
+                                        if IsPress(input) then
+                                                Holding = false
+                                        end
+                                end)
+                        end
+                        BindStep(Add, 1)
+                        BindStep(Subtract, -1)
                         function Slider:Set(Value)
                                 Set(Value)
                         end
@@ -2439,15 +2666,21 @@ Library.Sections.__index = Library.Sections;
                         local ContainerOutline = Instance.new('Frame', NewDrop)
                         local ContainerInline = Instance.new('Frame', ContainerOutline)
                         local UIListLayout = Instance.new('UIListLayout', ContainerInline)
+                        local RD = Library:Dim(30, 44)
+                        local TH = Library:Dim(10, 15)
+                        local VH = Library:Dim(16, 24)
+                        local VY = Library:Dim(14, 20)
+                        local CY = Library:Dim(32, 46)
+                        local OR = Library:Dim(15, 22)
                         NewDrop.Name = "NewDrop"
-                        NewDrop.Size = UDim2.new(1,0,0,30)
+                        NewDrop.Size = UDim2.new(1,0,0,RD)
                         NewDrop.BackgroundColor3 = Color3.new(1,1,1)
                         NewDrop.BackgroundTransparency = 1
                         NewDrop.BorderSizePixel = 0
                         NewDrop.BorderColor3 = Color3.new(0,0,0)
                         Outline.Name = "Outline"
-                        Outline.Position = UDim2.new(0,15,0,14)
-                        Outline.Size = UDim2.new(1,-30,0,16)
+                        Outline.Position = UDim2.new(0,15,0,VY)
+                        Outline.Size = UDim2.new(1,-30,0,VH)
                         Outline.BackgroundColor3 = Color3.new(0.1765,0.1765,0.1765)
                         Outline.BorderColor3 = Color3.new(0.0392,0.0392,0.0392)
                         Outline.AnchorPoint = NewVector2(0,0)
@@ -2487,7 +2720,7 @@ Library.Sections.__index = Library.Sections;
                         Icon.TextStrokeTransparency = 0
                         Title.Name = "Title"
                         Title.Position = UDim2.new(0,15,0,0)
-                        Title.Size = UDim2.new(1,0,0,10)
+                        Title.Size = UDim2.new(1,0,0,TH)
                         Title.BackgroundColor3 = Color3.new(1,1,1)
                         Title.BackgroundTransparency = 1
                         Title.BorderSizePixel = 0
@@ -2499,7 +2732,7 @@ Library.Sections.__index = Library.Sections;
                         Title.TextStrokeTransparency = 0
                         Title.Text = Dropdown.Name
                         ContainerOutline.Name = "ContainerOutline"
-                        ContainerOutline.Position = UDim2.new(0,15,0,32)
+                        ContainerOutline.Position = UDim2.new(0,15,0,CY)
                         ContainerOutline.Size = UDim2.new(1,-30,0,10)
                         ContainerOutline.BackgroundColor3 = Color3.new(0.1765,0.1765,0.1765)
                         ContainerOutline.BorderColor3 = Color3.new(0.0392,0.0392,0.0392)
@@ -2519,13 +2752,13 @@ Library.Sections.__index = Library.Sections;
                                 ContainerOutline.Visible = false
                                 NewDrop.ZIndex = 1
                                 Icon.Text = "+"
-                                NewDrop.Size = UDim2.new(1,0,0,30)
+                                NewDrop.Size = UDim2.new(1,0,0,RD)
                         end
                         local function OpenDropdown()
                                 ContainerOutline.Visible = true
                                 NewDrop.ZIndex = 2
                                 Icon.Text = "-"
-                                NewDrop.Size = UDim2.new(1,0,0,36 + #Dropdown.Options * 15)
+                                NewDrop.Size = UDim2.new(1,0,0,CY + 4 + #Dropdown.Options * OR)
                         end
                         Library:Connection(Outline.MouseButton1Down, function()
                                 if ContainerOutline.Visible then
@@ -2536,7 +2769,7 @@ Library.Sections.__index = Library.Sections;
                         end)
                         Library:Connection(game:GetService("UserInputService").InputBegan, function(Input)
                                 if ContainerOutline.Visible and (Input.UserInputType == Enum.UserInputType.MouseButton1 or Input.UserInputType == Enum.UserInputType.Touch) then
-                                        if not Library:IsMouseOverFrame(ContainerOutline) and not Library:IsMouseOverFrame(NewDrop) then
+                                        if not Library:IsMouseOverFrame(ContainerOutline, Input) and not Library:IsMouseOverFrame(NewDrop, Input) then
                                                 CloseDropdown()
                                         end
                                 end
@@ -2613,7 +2846,7 @@ Library.Sections.__index = Library.Sections;
                                         local NewOption = Instance.new('TextButton', ContainerInline)
                                         local OptionName = Instance.new('TextLabel', NewOption)
                                         NewOption.Name = "NewOption"
-                                        NewOption.Size = UDim2.new(1,0,0,15)
+                                        NewOption.Size = UDim2.new(1,0,0,OR)
                                         NewOption.BackgroundColor3 = Color3.new(1,1,1)
                                         NewOption.BackgroundTransparency = 1
                                         NewOption.BorderSizePixel = 0
@@ -2722,7 +2955,7 @@ Library.Sections.__index = Library.Sections;
                                 createoptions(Dropdown.Options)
 
                                 if ContainerOutline.Visible then
-                                        NewDrop.Size = UDim2.new(1,0,0,36 + #Dropdown.Options * 15)
+                                        NewDrop.Size = UDim2.new(1,0,0,CY + 4 + #Dropdown.Options * OR)
                                 end
 
                                 if Dropdown.Max then
@@ -2814,15 +3047,19 @@ Library.Sections.__index = Library.Sections;
                         local Toggle = Instance.new('TextButton', ModeInline)
                         local Always = Instance.new('TextButton', ModeInline)
                         local ListValue = Library.KeyList:NewKey(tostring(Keybind.State):gsub("Enum.KeyCode.", ""), Keybind.Name, Keybind.Mode)
+                        local KW = Library:Dim(40, 54)
+                        local KH = Library:Dim(12, 18)
+                        local TH = Library:Dim(10, 15)
+                        local MR = Library:Dim(15, 22)
                         NewKey.Name = "NewKey"
-                        NewKey.Size = UDim2.new(1,0,0,12)
+                        NewKey.Size = UDim2.new(1,0,0,KH)
                         NewKey.BackgroundColor3 = Color3.new(1,1,1)
                         NewKey.BackgroundTransparency = 1
                         NewKey.BorderSizePixel = 0
                         NewKey.BorderColor3 = Color3.new(0,0,0)
                         Outline.Name = "Outline"
                         Outline.Position = UDim2.new(1,0,0.5,0)
-                        Outline.Size = UDim2.new(0,40,0,12)
+                        Outline.Size = UDim2.new(0,KW,0,KH)
                         Outline.BackgroundColor3 = Color3.new(0.1765,0.1765,0.1765)
                         Outline.BorderColor3 = Color3.new(0.0392,0.0392,0.0392)
                         Outline.AnchorPoint = NewVector2(1,0.5)
@@ -2847,7 +3084,7 @@ Library.Sections.__index = Library.Sections;
                         Value.TextStrokeTransparency = 0
                         Title.Name = "Title"
                         Title.Position = UDim2.new(0,15,0,0)
-                        Title.Size = UDim2.new(1,0,0,10)
+                        Title.Size = UDim2.new(1,0,0,TH)
                         Title.BackgroundColor3 = Color3.new(1,1,1)
                         Title.BackgroundTransparency = 1
                         Title.BorderSizePixel = 0
@@ -2859,8 +3096,8 @@ Library.Sections.__index = Library.Sections;
                         Title.Text = Keybind.Name
                         Title.TextStrokeTransparency = 0
                         ModeOutline.Name = "ModeOutline"
-                        ModeOutline.Position = UDim2.new(1,65,0.5,0)
-                        ModeOutline.Size = UDim2.new(0,60,0,12)
+                        ModeOutline.Position = UDim2.new(1,KW + 25,0.5,0)
+                        ModeOutline.Size = UDim2.new(0,Library:Dim(60, 72),0,KH)
                         ModeOutline.BackgroundColor3 = Color3.new(0.1765,0.1765,0.1765)
                         ModeOutline.BorderColor3 = Color3.new(0.0392,0.0392,0.0392)
                         ModeOutline.AnchorPoint = NewVector2(1,0.5)
@@ -2874,7 +3111,7 @@ Library.Sections.__index = Library.Sections;
                         ModeInline.BorderColor3 = Color3.new(0,0,0)
                         UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
                         Hold.Name = "Hold"
-                        Hold.Size = UDim2.new(1,0,0,15)
+                        Hold.Size = UDim2.new(1,0,0,MR)
                         Hold.BackgroundColor3 = Color3.new(1,1,1)
                         Hold.BackgroundTransparency = 1
                         Hold.BorderSizePixel = 0
@@ -2886,7 +3123,7 @@ Library.Sections.__index = Library.Sections;
                         Hold.TextSize = Library.FontSize
                         Hold.TextStrokeTransparency = 0
                         Toggle.Name = "Toggle"
-                        Toggle.Size = UDim2.new(1,0,0,15)
+                        Toggle.Size = UDim2.new(1,0,0,MR)
                         Toggle.BackgroundColor3 = Color3.new(1,1,1)
                         Toggle.BackgroundTransparency = 1
                         Toggle.BorderSizePixel = 0
@@ -2898,7 +3135,7 @@ Library.Sections.__index = Library.Sections;
                         Toggle.TextSize = Library.FontSize
                         Toggle.TextStrokeTransparency = 0
                         Always.Name = "Always"
-                        Always.Size = UDim2.new(1,0,0,15)
+                        Always.Size = UDim2.new(1,0,0,MR)
                         Always.BackgroundColor3 = Color3.new(1,1,1)
                         Always.BackgroundTransparency = 1
                         Always.BorderSizePixel = 0
@@ -2975,6 +3212,9 @@ Library.Sections.__index = Library.Sections;
                         end
                         set(Keybind.State)
                         set(Keybind.Mode)
+                        local function RestoreKeyText()
+                                Value.Text = Key and (Library.Keys[Key] or tostring(Key):gsub("Enum.KeyCode.", "")) or "None"
+                        end
                         Outline.MouseButton1Click:Connect(function()
                                 if not Keybind.Binding then
 
@@ -2983,6 +3223,13 @@ Library.Sections.__index = Library.Sections;
                                         Keybind.Binding = Library:Connection(
                                                 game:GetService("UserInputService").InputBegan,
                                                 function(input, gpe)
+                                                        if input.UserInputType == Enum.UserInputType.Touch then
+                                                                Library:Disconnect(Keybind.Binding)
+                                                                task.wait()
+                                                                Keybind.Binding = nil
+                                                                RestoreKeyText()
+                                                                return
+                                                        end
                                                         set(
                                                                 input.UserInputType == Enum.UserInputType.Keyboard and input.KeyCode
                                                                         or input.UserInputType
@@ -3075,7 +3322,7 @@ Library.Sections.__index = Library.Sections;
                         end)
                         Library:Connection(game:GetService("UserInputService").InputBegan, function(Input, Chatting)
                                 if ModeOutline.Visible and (Input.UserInputType == Enum.UserInputType.MouseButton1 or Input.UserInputType == Enum.UserInputType.Touch) then
-                                        if not Library:IsMouseOverFrame(ModeOutline) then
+                                        if not Library:IsMouseOverFrame(ModeOutline, Input) then
                                                 ModeOutline.Visible = false
                                         end
                                 end
@@ -3132,13 +3379,14 @@ Library.Sections.__index = Library.Sections;
                         }
                         local NewToggle = Instance.new('Frame', Colorpicker.Section.Elements.SectionContent)
                         local TextLabel = Instance.new('TextLabel', NewToggle)
+                        local RH = Library:Dim(10, 16)
                         NewToggle.Name = "NewToggle"
-                        NewToggle.Size = UDim2.new(1,0,0,10)
+                        NewToggle.Size = UDim2.new(1,0,0,RH)
                         NewToggle.BackgroundColor3 = Color3.new(1,1,1)
                         NewToggle.BackgroundTransparency = 1
                         NewToggle.BorderSizePixel = 0
                         NewToggle.BorderColor3 = Color3.new(0,0,0)
-                        TextLabel.Position = UDim2.new(0,15,0,0)
+                        TextLabel.Position = UDim2.new(0,RH + 5,0,0)
                         TextLabel.Size = UDim2.new(0,100,1,0)
                         TextLabel.BackgroundColor3 = Color3.new(1,1,1)
                         TextLabel.BackgroundTransparency = 1
@@ -3220,15 +3468,18 @@ Library.Sections.__index = Library.Sections;
                         local Inline = Instance.new('Frame', Outline)
                         local Value = Instance.new('TextBox', Inline)
                         local Title = Instance.new('TextLabel', NewDrop)
+                        local RD = Library:Dim(30, 44)
+                        local TH = Library:Dim(10, 15)
+                        local VH = Library:Dim(16, 24)
                         NewDrop.Name = "NewDrop"
-                        NewDrop.Size = UDim2.new(1,0,0,30)
+                        NewDrop.Size = UDim2.new(1,0,0,RD)
                         NewDrop.BackgroundColor3 = Color3.new(1,1,1)
                         NewDrop.BackgroundTransparency = 1
                         NewDrop.BorderSizePixel = 0
                         NewDrop.BorderColor3 = Color3.new(0,0,0)
                         Outline.Name = "Outline"
                         Outline.Position = UDim2.new(0,15,1,0)
-                        Outline.Size = UDim2.new(1,-30,0,16)
+                        Outline.Size = UDim2.new(1,-30,0,VH)
                         Outline.BackgroundColor3 = Color3.new(0.1765,0.1765,0.1765)
                         Outline.BorderColor3 = Color3.new(0.0392,0.0392,0.0392)
                         Outline.AnchorPoint = NewVector2(0,1)
@@ -3257,7 +3508,7 @@ Library.Sections.__index = Library.Sections;
                         Value.ClearTextOnFocus = false
                         Title.Name = "Title"
                         Title.Position = UDim2.new(0,15,0,0)
-                        Title.Size = UDim2.new(1,0,0,10)
+                        Title.Size = UDim2.new(1,0,0,TH)
                         Title.BackgroundColor3 = Color3.new(1,1,1)
                         Title.BackgroundTransparency = 1
                         Title.BorderSizePixel = 0
@@ -3317,8 +3568,9 @@ Library.Sections.__index = Library.Sections;
                         local Outline = Instance.new('Frame', NewButton)
                         local Inline = Instance.new('Frame', Outline)
                         local Value = Instance.new('TextLabel', Inline)
+                        local BH = Library:Dim(14, 24)
                         NewButton.Name = "NewButton"
-                        NewButton.Size = UDim2.new(1,0,0,14)
+                        NewButton.Size = UDim2.new(1,0,0,BH)
                         NewButton.BackgroundColor3 = Color3.new(1,1,1)
                         NewButton.BackgroundTransparency = 1
                         NewButton.BorderSizePixel = 0
@@ -3330,7 +3582,7 @@ Library.Sections.__index = Library.Sections;
                         NewButton.TextSize = 14
                         Outline.Name = "Outline"
                         Outline.Position = UDim2.new(0,15,1,0)
-                        Outline.Size = UDim2.new(1,-30,0,14)
+                        Outline.Size = UDim2.new(1,-30,0,BH)
                         Outline.BackgroundColor3 = Color3.new(0.1765,0.1765,0.1765)
                         Outline.BorderColor3 = Color3.new(0.0392,0.0392,0.0392)
                         Outline.AnchorPoint = NewVector2(0,1)
@@ -3377,7 +3629,7 @@ Library.Sections.__index = Library.Sections;
                         }
                         local NewButton = Instance.new('TextLabel', Label.Section.Elements.SectionContent)
                         NewButton.Name = "NewButton"
-                        NewButton.Size = UDim2.new(1,0,0,12)
+                        NewButton.Size = UDim2.new(1,0,0,Library:Dim(12, 18))
                         NewButton.BackgroundColor3 = Color3.new(1,1,1)
                         NewButton.BackgroundTransparency = 1
                         NewButton.BorderSizePixel = 0
