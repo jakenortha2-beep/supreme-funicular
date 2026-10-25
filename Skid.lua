@@ -606,6 +606,8 @@ Library.Sections.__index = Library.Sections;
                                         else
                                                 theme.TextColor3 = Color
                                         end
+                                elseif theme:IsA("ScrollingFrame") then
+                                        theme.ScrollBarImageColor3 = Color
                                 else
                                         theme.BackgroundColor3 = Color
                                 end
@@ -613,9 +615,12 @@ Library.Sections.__index = Library.Sections;
                 end
                 function Library:IsMouseOverFrame(Frame)
                         local AbsPos, AbsSize = Frame.AbsolutePosition, Frame.AbsoluteSize;
+                        local Location = InputService:GetMouseLocation();
+                        local X = Location.X;
+                        local Y = Location.Y - game:GetService("GuiService"):GetGuiInset().Y;
 
-                        if Mouse.X >= AbsPos.X and Mouse.X <= AbsPos.X + AbsSize.X
-                                and Mouse.Y >= AbsPos.Y and Mouse.Y <= AbsPos.Y + AbsSize.Y then
+                        if X >= AbsPos.X and X <= AbsPos.X + AbsSize.X
+                                and Y >= AbsPos.Y and Y <= AbsPos.Y + AbsSize.Y then
 
                                 return true;
                         end;
@@ -1049,6 +1054,20 @@ Library.Sections.__index = Library.Sections;
                         Icon.MouseButton1Down:Connect(function()
                                 ColorWindow.Visible = not ColorWindow.Visible
                                 parent.ZIndex = ColorWindow.Visible and 5 or 1
+                                if ColorWindow.Visible then
+                                        local Scroll = parent:FindFirstAncestorOfClass("ScrollingFrame")
+                                        if Scroll then
+                                                local RowBottom = parent.AbsolutePosition.Y + parent.AbsoluteSize.Y
+                                                local ViewBottom = Scroll.AbsolutePosition.Y + Scroll.AbsoluteSize.Y
+                                                if ViewBottom - RowBottom < 175 then
+                                                        ColorWindow.AnchorPoint = NewVector2(1,1)
+                                                        ColorWindow.Position = UDim2.new(1,-2,0,-2)
+                                                else
+                                                        ColorWindow.AnchorPoint = NewVector2(1,0)
+                                                        ColorWindow.Position = UDim2.new(1,-2,1,2)
+                                                end
+                                        end
+                                end
 
                                 if slidinghue then
                                         slidinghue = false
@@ -1109,6 +1128,10 @@ Library.Sections.__index = Library.Sections;
                                 Elements = {};
                                 Size = Options.Size or Options.size or UDim2.new(0, 550,0, 600);
                         };
+                        local BaseWidth = 550
+                        if typeof(Window.Size) == "UDim2" and Window.Size.X.Offset > 0 then
+                                BaseWidth = Window.Size.X.Offset
+                        end
                         local ScreenGui = Instance.new('ScreenGui', game.CoreGui)
                         local Outline = Instance.new('Frame', ScreenGui)
                         local Inline = Instance.new('Frame', Outline)
@@ -1122,7 +1145,7 @@ Library.Sections.__index = Library.Sections;
                         ScreenGui.DisplayOrder = 2
                         Outline.Name = "Outline"
                         Outline.Position = UDim2.new(0.5,0,0.5,0)
-                        Outline.Size = Window.Size
+                        Outline.Size = UDim2.new(0, BaseWidth, 0, 320)
                         Outline.BackgroundColor3 = Color3.new(0.1765,0.1765,0.1765)
                         Outline.BorderColor3 = Color3.new(0.0392,0.0392,0.0392)
                         Outline.AnchorPoint = Vector2.new(0.5,0.5)
@@ -1170,7 +1193,80 @@ Library.Sections.__index = Library.Sections;
                         DragButton.FontFace = Font.new("rbxassetid://12187371840")
                         DragButton.TextSize = 14
 
-
+                        function Window:UpdateSize()
+                                local ContentHeight = 0
+                                local TopOffset = 35
+                                for _, Pg in pairs(Window.Pages) do
+                                        if Pg.Open then
+                                                if Pg.Icons then
+                                                        TopOffset = 75
+                                                        for _, Wp in pairs(Pg.Weapons) do
+                                                                if Wp.Open then
+                                                                        local LLayout = Wp.Elements.LeftLayout
+                                                                        local RLayout = Wp.Elements.RightLayout
+                                                                        if LLayout then
+                                                                                ContentHeight = math.max(ContentHeight, LLayout.AbsoluteContentSize.Y)
+                                                                        end
+                                                                        if RLayout then
+                                                                                ContentHeight = math.max(ContentHeight, RLayout.AbsoluteContentSize.Y)
+                                                                        end
+                                                                end
+                                                        end
+                                                else
+                                                        local LLayout = Pg.Elements.LeftLayout
+                                                        local RLayout = Pg.Elements.RightLayout
+                                                        if LLayout then
+                                                                ContentHeight = math.max(ContentHeight, LLayout.AbsoluteContentSize.Y)
+                                                        end
+                                                        if RLayout then
+                                                                ContentHeight = math.max(ContentHeight, RLayout.AbsoluteContentSize.Y)
+                                                        end
+                                                end
+                                        end
+                                end
+                                local ScreenSize = ScreenGui.AbsoluteSize
+                                local MaxHeight = math.max(ScreenSize.Y - 24, 140)
+                                local MaxWidth = math.max(ScreenSize.X - 16, 320)
+                                local Needed = ContentHeight + TopOffset + 27
+                                local Height = math.clamp(Needed, 140, MaxHeight)
+                                local Width = math.clamp(BaseWidth, 320, MaxWidth)
+                                Outline.Size = UDim2.new(0, Width, 0, Height)
+                        end
+                        local SizeUpdateQueued = false
+                        function Window:QueueSizeUpdate()
+                                if SizeUpdateQueued then
+                                        return
+                                end
+                                SizeUpdateQueued = true
+                                task.defer(function()
+                                        SizeUpdateQueued = false
+                                        Window:UpdateSize()
+                                end)
+                        end
+                        Library:Connection(ScreenGui:GetPropertyChangedSignal("AbsoluteSize"), function()
+                                Window:QueueSizeUpdate()
+                        end)
+                        local Dragging = false
+                        local DragStart = nil
+                        local DragOrigin = nil
+                        Library:Connection(DragButton.InputBegan, function(Input)
+                                if Input.UserInputType == Enum.UserInputType.MouseButton1 or Input.UserInputType == Enum.UserInputType.Touch then
+                                        Dragging = true
+                                        DragStart = Input.Position
+                                        DragOrigin = Outline.Position
+                                end
+                        end)
+                        Library:Connection(InputService.InputChanged, function(Input)
+                                if Dragging and (Input.UserInputType == Enum.UserInputType.MouseMovement or Input.UserInputType == Enum.UserInputType.Touch) then
+                                        local Delta = Input.Position - DragStart
+                                        Outline.Position = UDim2.new(DragOrigin.X.Scale, DragOrigin.X.Offset + Delta.X, DragOrigin.Y.Scale, DragOrigin.Y.Offset + Delta.Y)
+                                end
+                        end)
+                        Library:Connection(InputService.InputEnded, function(Input)
+                                if Input.UserInputType == Enum.UserInputType.MouseButton1 or Input.UserInputType == Enum.UserInputType.Touch then
+                                        Dragging = false
+                                end
+                        end)
 
                         Window.Elements = {
                                 TabHolder = Tabs,
@@ -1200,6 +1296,7 @@ Library.Sections.__index = Library.Sections;
                         end;
 
                         Library.Holder = Outline
+                        Window:QueueSizeUpdate()
                         return setmetatable(Window, Library)
                 end
                 function Library:Page(Properties)
@@ -1221,10 +1318,12 @@ Library.Sections.__index = Library.Sections;
             local WeaponOutline = Instance.new("Frame", Page.Window.Elements.Holder)
             local WeaponInline = Instance.new("Frame", WeaponOutline)
             local UIListLayout3 = Instance.new("UIListLayout", WeaponInline)
-            local Left = Instance.new('Frame', Page.Window.Elements.Holder)
-            local Right = Instance.new('Frame', Page.Window.Elements.Holder)
+            local Left = Instance.new('ScrollingFrame', Page.Window.Elements.Holder)
+            local Right = Instance.new('ScrollingFrame', Page.Window.Elements.Holder)
             local UIListLayout = Instance.new('UIListLayout', Left)
             local UIListLayout_2 = Instance.new('UIListLayout', Right)
+            local LeftPad = Instance.new('Frame', Left)
+            local RightPad = Instance.new('Frame', Right)
             Left.Name = "Left"
             Left.Position = UDim2.new(0,5,0,35)
             Left.Size = UDim2.new(0.485,-3,1,-40)
@@ -1234,6 +1333,15 @@ Library.Sections.__index = Library.Sections;
             Left.BorderColor3 = Color3.new(0,0,0)
             Left.Visible = false
             Left.ZIndex = 3
+            Left.ScrollingDirection = Enum.ScrollingDirection.Y
+            Left.AutomaticCanvasSize = Enum.AutomaticSize.Y
+            Left.CanvasSize = UDim2.new(0,0,0,0)
+            Left.ScrollBarThickness = 3
+            Left.ScrollBarImageColor3 = Library.Accent
+            Left.ScrollBarImageTransparency = 0.3
+            Left.ElasticBehavior = Enum.ElasticBehavior.WhenScrollable
+            Left.ScrollingEnabled = true
+            Library:AddThemeObject(Left)
             Right.Name = "Right"
             Right.Position = UDim2.new(1,-5,0,35)
             Right.Size = UDim2.new(0.485,-3,1,-40)
@@ -1243,10 +1351,37 @@ Library.Sections.__index = Library.Sections;
             Right.AnchorPoint = Vector2.new(1,0)
             Right.Visible = false
             Right.BackgroundTransparency = 1
+            Right.ScrollingDirection = Enum.ScrollingDirection.Y
+            Right.AutomaticCanvasSize = Enum.AutomaticSize.Y
+            Right.CanvasSize = UDim2.new(0,0,0,0)
+            Right.ScrollBarThickness = 3
+            Right.ScrollBarImageColor3 = Library.Accent
+            Right.ScrollBarImageTransparency = 0.3
+            Right.ElasticBehavior = Enum.ElasticBehavior.WhenScrollable
+            Right.ScrollingEnabled = true
+            Library:AddThemeObject(Right)
+            LeftPad.Name = "LeftPad"
+            LeftPad.Size = UDim2.new(1,0,0,6)
+            LeftPad.BackgroundColor3 = Color3.new(1,1,1)
+            LeftPad.BackgroundTransparency = 1
+            LeftPad.BorderSizePixel = 0
+            LeftPad.LayoutOrder = 999999
+            RightPad.Name = "RightPad"
+            RightPad.Size = UDim2.new(1,0,0,6)
+            RightPad.BackgroundColor3 = Color3.new(1,1,1)
+            RightPad.BackgroundTransparency = 1
+            RightPad.BorderSizePixel = 0
+            RightPad.LayoutOrder = 999999
             UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
             UIListLayout.Padding = UDim.new(0,12)
             UIListLayout_2.SortOrder = Enum.SortOrder.LayoutOrder
             UIListLayout_2.Padding = UDim.new(0,12)
+            Library:Connection(UIListLayout:GetPropertyChangedSignal("AbsoluteContentSize"), function()
+                Page.Window:QueueSizeUpdate()
+            end)
+            Library:Connection(UIListLayout_2:GetPropertyChangedSignal("AbsoluteContentSize"), function()
+                Page.Window:QueueSizeUpdate()
+            end)
                         TabButton.Name = "TabButton"
                         TabButton.Size = UDim2.new(0.25,0,1,0)
                         TabButton.BackgroundColor3 = Color3.new(1,1,1)
@@ -1305,6 +1440,7 @@ Library.Sections.__index = Library.Sections;
                                 TabAccent.Visible = Page.Open
                                 TabLine.Visible = not Page.Open
                                 TabButton.TextColor3 = Page.Open and Color3.fromRGB(255,255,255) or Color3.fromRGB(145,145,145)
+                                Page.Window:QueueSizeUpdate()
                         end
                         Library:Connection(TabButton.MouseButton1Down, function()
                                 if not Page.Open then
@@ -1337,6 +1473,8 @@ Library.Sections.__index = Library.Sections;
                         Page.Elements = {
                 Left = Page.Icons and nil or Left,
                                 Right = Page.Icons and nil or Right,
+                                LeftLayout = UIListLayout,
+                                RightLayout = UIListLayout_2,
                                 Button = TabButton,
                 WeaponOutline = WeaponOutline,
                 WeaponInline = WeaponInline,
@@ -1361,10 +1499,12 @@ Library.Sections.__index = Library.Sections;
                                 Elements = {},
                         }
 
-                        local Left = Instance.new('Frame', Weapon.Window.Window.Elements.Holder)
-                        local Right = Instance.new('Frame', Weapon.Window.Window.Elements.Holder)
+                        local Left = Instance.new('ScrollingFrame', Weapon.Window.Window.Elements.Holder)
+                        local Right = Instance.new('ScrollingFrame', Weapon.Window.Window.Elements.Holder)
                         local UIListLayout = Instance.new('UIListLayout', Left)
                         local UIListLayout_2 = Instance.new('UIListLayout', Right)
+                        local LeftPad = Instance.new('Frame', Left)
+                        local RightPad = Instance.new('Frame', Right)
             local New = Instance.new("ImageButton")
                         New.Name = "New"
             New.Parent = Weapon.Window.Elements.WeaponInline
@@ -1384,6 +1524,15 @@ Library.Sections.__index = Library.Sections;
                         Left.BorderColor3 = Color3.new(0,0,0)
                         Left.Visible = false
                         Left.ZIndex = 3
+                        Left.ScrollingDirection = Enum.ScrollingDirection.Y
+                        Left.AutomaticCanvasSize = Enum.AutomaticSize.Y
+                        Left.CanvasSize = UDim2.new(0,0,0,0)
+                        Left.ScrollBarThickness = 3
+                        Left.ScrollBarImageColor3 = Library.Accent
+                        Left.ScrollBarImageTransparency = 0.3
+                        Left.ElasticBehavior = Enum.ElasticBehavior.WhenScrollable
+                        Left.ScrollingEnabled = true
+                        Library:AddThemeObject(Left)
                         Right.Name = "Right"
                         Right.Position = UDim2.new(1,-5,0,75)
                         Right.Size = UDim2.new(0.485,-3,1, -80)
@@ -1393,16 +1542,44 @@ Library.Sections.__index = Library.Sections;
                         Right.AnchorPoint = Vector2.new(1,0)
                         Right.Visible = false
                         Right.BackgroundTransparency = 1
+                        Right.ScrollingDirection = Enum.ScrollingDirection.Y
+                        Right.AutomaticCanvasSize = Enum.AutomaticSize.Y
+                        Right.CanvasSize = UDim2.new(0,0,0,0)
+                        Right.ScrollBarThickness = 3
+                        Right.ScrollBarImageColor3 = Library.Accent
+                        Right.ScrollBarImageTransparency = 0.3
+                        Right.ElasticBehavior = Enum.ElasticBehavior.WhenScrollable
+                        Right.ScrollingEnabled = true
+                        Library:AddThemeObject(Right)
+                        LeftPad.Name = "LeftPad"
+                        LeftPad.Size = UDim2.new(1,0,0,6)
+                        LeftPad.BackgroundColor3 = Color3.new(1,1,1)
+                        LeftPad.BackgroundTransparency = 1
+                        LeftPad.BorderSizePixel = 0
+                        LeftPad.LayoutOrder = 999999
+                        RightPad.Name = "RightPad"
+                        RightPad.Size = UDim2.new(1,0,0,6)
+                        RightPad.BackgroundColor3 = Color3.new(1,1,1)
+                        RightPad.BackgroundTransparency = 1
+                        RightPad.BorderSizePixel = 0
+                        RightPad.LayoutOrder = 999999
                         UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
                         UIListLayout.Padding = UDim.new(0,12)
                         UIListLayout_2.SortOrder = Enum.SortOrder.LayoutOrder
                         UIListLayout_2.Padding = UDim.new(0,12)
+                        Library:Connection(UIListLayout:GetPropertyChangedSignal("AbsoluteContentSize"), function()
+                                Weapon.Window.Window:QueueSizeUpdate()
+                        end)
+                        Library:Connection(UIListLayout_2:GetPropertyChangedSignal("AbsoluteContentSize"), function()
+                                Weapon.Window.Window:QueueSizeUpdate()
+                        end)
 
                         function Weapon:Turn(bool)
                                 Weapon.Open = bool
                                 Left.Visible = Weapon.Open and Weapon.Window.Open
                                 Right.Visible = Weapon.Open and Weapon.Window.Open
                                 New.ImageColor3 = Weapon.Open and Color3.new(1,1,1) or Color3.fromRGB(145,145,145)
+                                Weapon.Window.Window:QueueSizeUpdate()
                         end
                         Library:Connection(New.MouseButton1Down, function()
                                 if not Weapon.Open then
@@ -1418,6 +1595,8 @@ Library.Sections.__index = Library.Sections;
                         Weapon.Elements = {
                                 Left = Left,
                                 Right = Right,
+                                LeftLayout = UIListLayout,
+                                RightLayout = UIListLayout_2,
                                 Button = New
                         }
 
@@ -2267,11 +2446,11 @@ Library.Sections.__index = Library.Sections;
                         NewDrop.BorderSizePixel = 0
                         NewDrop.BorderColor3 = Color3.new(0,0,0)
                         Outline.Name = "Outline"
-                        Outline.Position = UDim2.new(0,15,1,0)
+                        Outline.Position = UDim2.new(0,15,0,14)
                         Outline.Size = UDim2.new(1,-30,0,16)
                         Outline.BackgroundColor3 = Color3.new(0.1765,0.1765,0.1765)
                         Outline.BorderColor3 = Color3.new(0.0392,0.0392,0.0392)
-                        Outline.AnchorPoint = NewVector2(0,1)
+                        Outline.AnchorPoint = NewVector2(0,0)
                         Outline.Text = ""
                         Outline.AutoButtonColor = false
                         Inline.Name = "Inline"
@@ -2320,7 +2499,7 @@ Library.Sections.__index = Library.Sections;
                         Title.TextStrokeTransparency = 0
                         Title.Text = Dropdown.Name
                         ContainerOutline.Name = "ContainerOutline"
-                        ContainerOutline.Position = UDim2.new(0,15,1,2)
+                        ContainerOutline.Position = UDim2.new(0,15,0,32)
                         ContainerOutline.Size = UDim2.new(1,-30,0,10)
                         ContainerOutline.BackgroundColor3 = Color3.new(0.1765,0.1765,0.1765)
                         ContainerOutline.BorderColor3 = Color3.new(0.0392,0.0392,0.0392)
@@ -2336,22 +2515,29 @@ Library.Sections.__index = Library.Sections;
                         ContainerInline.ZIndex = 6;
                         UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
 
+                        local function CloseDropdown()
+                                ContainerOutline.Visible = false
+                                NewDrop.ZIndex = 1
+                                Icon.Text = "+"
+                                NewDrop.Size = UDim2.new(1,0,0,30)
+                        end
+                        local function OpenDropdown()
+                                ContainerOutline.Visible = true
+                                NewDrop.ZIndex = 2
+                                Icon.Text = "-"
+                                NewDrop.Size = UDim2.new(1,0,0,36 + #Dropdown.Options * 15)
+                        end
                         Library:Connection(Outline.MouseButton1Down, function()
-                                ContainerOutline.Visible = not ContainerOutline.Visible
                                 if ContainerOutline.Visible then
-                                        NewDrop.ZIndex = 2
-                                        Icon.Text = "-"
+                                        CloseDropdown()
                                 else
-                                        NewDrop.ZIndex = 1
-                                        Icon.Text = "+"
+                                        OpenDropdown()
                                 end
                         end)
                         Library:Connection(game:GetService("UserInputService").InputBegan, function(Input)
-                                if ContainerOutline.Visible and Input.UserInputType == Enum.UserInputType.MouseButton1 then
+                                if ContainerOutline.Visible and (Input.UserInputType == Enum.UserInputType.MouseButton1 or Input.UserInputType == Enum.UserInputType.Touch) then
                                         if not Library:IsMouseOverFrame(ContainerOutline) and not Library:IsMouseOverFrame(NewDrop) then
-                                                ContainerOutline.Visible = false
-                                                NewDrop.ZIndex = 1
-                                                Icon.Text = "+"
+                                                CloseDropdown()
                                         end
                                 end
                         end)
@@ -2534,6 +2720,10 @@ Library.Sections.__index = Library.Sections;
                                 Dropdown.Options = tbl or Dropdown.Options
 
                                 createoptions(Dropdown.Options)
+
+                                if ContainerOutline.Visible then
+                                        NewDrop.Size = UDim2.new(1,0,0,36 + #Dropdown.Options * 15)
+                                end
 
                                 if Dropdown.Max then
                                         table.clear(chosen)
